@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Npgsql;
 using TestContainers.Core.Builders;
-using TestContainers.Core.Containers;
+using TestContainers.PostgreSql;
 using Xunit;
 
 namespace TestContainers.Tests.ContainerTests

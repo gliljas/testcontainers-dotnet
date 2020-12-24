@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using TestContainers.Core.Builders;
-using TestContainers.Core.Containers;
+using TestContainers.MySql;
 using Xunit;
 
 namespace TestContainers.Tests.ContainerTests

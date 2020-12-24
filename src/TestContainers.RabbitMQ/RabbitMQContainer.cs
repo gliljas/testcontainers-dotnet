@@ -2,8 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Polly;
 using RabbitMQ.Client;
+using TestContainers.Core.Containers;
 
-namespace TestContainers.Core.Containers
+namespace TestContainers.RabbitMQ
 {
     public class RabbitMQContainer : Container
     {
@@ -26,8 +27,7 @@ namespace TestContainers.Core.Containers
                 VirtualHost = VirtualHost,
                 UserName = UserName,
                 Password = Password,
-                Protocol = Protocols.DefaultProtocol,
-                RequestedHeartbeat = DefaultRequestedHeartbeatInSec
+                RequestedHeartbeat = TimeSpan.FromSeconds(DefaultRequestedHeartbeatInSec)
             });
 
         protected override async Task WaitUntilContainerStarted()

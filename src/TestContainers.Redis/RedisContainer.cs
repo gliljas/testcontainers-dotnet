@@ -2,8 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Polly;
 using StackExchange.Redis;
+using TestContainers.Core.Containers;
 
-namespace TestContainers.Core.Containers
+namespace TestContainers.Redis
 {
     public sealed class RedisContainer : DatabaseContainer
     {

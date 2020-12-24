@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.645
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BB91417F-1345-4FAD-9D56-7B11DF593084}"
 EndProject
@@ -9,6 +9,14 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestContainers", "src\TestContainers\TestContainers.csproj", "{4D05E9EF-78BF-48A6-9CF6-D4F6AEBE2C7A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestContainers.Tests", "test\TestContainers.Tests\TestContainers.Tests.csproj", "{9C954639-D343-4E02-A5C8-B3A466CE2F70}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestContainers.MySql", "src\TestContainers.MySql\TestContainers.MySql.csproj", "{55FE5E64-A9A7-48EB-828D-66DE7F0AD09B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestContainers.Redis", "src\TestContainers.Redis\TestContainers.Redis.csproj", "{986CBE76-743D-441F-B56E-F89692BE3341}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestContainers.PostgreSql", "src\TestContainers.PostgreSql\TestContainers.PostgreSql.csproj", "{B046ACAA-EE64-432E-9275-7074B8380CB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestContainers.RabbitMQ", "src\TestContainers.RabbitMQ\TestContainers.RabbitMQ.csproj", "{6A2C7F81-4C7F-4EA2-B67A-209A01C8545C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,6 +32,22 @@ Global
 		{9C954639-D343-4E02-A5C8-B3A466CE2F70}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C954639-D343-4E02-A5C8-B3A466CE2F70}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C954639-D343-4E02-A5C8-B3A466CE2F70}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55FE5E64-A9A7-48EB-828D-66DE7F0AD09B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55FE5E64-A9A7-48EB-828D-66DE7F0AD09B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55FE5E64-A9A7-48EB-828D-66DE7F0AD09B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55FE5E64-A9A7-48EB-828D-66DE7F0AD09B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{986CBE76-743D-441F-B56E-F89692BE3341}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{986CBE76-743D-441F-B56E-F89692BE3341}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{986CBE76-743D-441F-B56E-F89692BE3341}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{986CBE76-743D-441F-B56E-F89692BE3341}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B046ACAA-EE64-432E-9275-7074B8380CB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B046ACAA-EE64-432E-9275-7074B8380CB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B046ACAA-EE64-432E-9275-7074B8380CB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B046ACAA-EE64-432E-9275-7074B8380CB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A2C7F81-4C7F-4EA2-B67A-209A01C8545C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A2C7F81-4C7F-4EA2-B67A-209A01C8545C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A2C7F81-4C7F-4EA2-B67A-209A01C8545C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A2C7F81-4C7F-4EA2-B67A-209A01C8545C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -31,6 +55,10 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{4D05E9EF-78BF-48A6-9CF6-D4F6AEBE2C7A} = {BB91417F-1345-4FAD-9D56-7B11DF593084}
 		{9C954639-D343-4E02-A5C8-B3A466CE2F70} = {5DC26A60-8775-4076-A94D-1BDC36B0A828}
+		{55FE5E64-A9A7-48EB-828D-66DE7F0AD09B} = {BB91417F-1345-4FAD-9D56-7B11DF593084}
+		{986CBE76-743D-441F-B56E-F89692BE3341} = {BB91417F-1345-4FAD-9D56-7B11DF593084}
+		{B046ACAA-EE64-432E-9275-7074B8380CB2} = {BB91417F-1345-4FAD-9D56-7B11DF593084}
+		{6A2C7F81-4C7F-4EA2-B67A-209A01C8545C} = {BB91417F-1345-4FAD-9D56-7B11DF593084}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6D84DD44-76E1-4131-9E5E-075E384BFEE6}

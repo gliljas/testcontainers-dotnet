@@ -4,7 +4,7 @@ namespace TestContainers.Core.Containers
     {
         protected int GetStartupTimeoutSeconds => 120;
 
-        protected int GetConnectTImeoutSeconds => 120;
+        protected int GetConnectTimeoutSeconds => 120;
 
         public DatabaseContainer() : base()
         {

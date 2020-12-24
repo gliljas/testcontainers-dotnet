@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using TestContainers.Core.Builders;
-using TestContainers.Core.Containers;
+using TestContainers.RabbitMQ;
 using Xunit;
 
 namespace TestContainers.Tests.ContainerTests

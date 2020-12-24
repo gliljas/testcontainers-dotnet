@@ -1,16 +1,16 @@
 using System;
-using System.Net.Sockets;
 using System.Threading.Tasks;
-using Npgsql;
+using MySql.Data.MySqlClient;
 using Polly;
+using TestContainers.Core.Containers;
 
-namespace TestContainers.Core.Containers
+namespace TestContainers.MySql
 {
-    public sealed class PostgreSqlContainer : DatabaseContainer
+    public sealed class MySqlContainer : DatabaseContainer
     {
-        public const string IMAGE = "postgres";
-        public const string DEFAULT_TAG = "9.6.8";
-        public const int POSTGRESQL_PORT = 5432;
+        public const string NAME = "mysql";
+        public const string IMAGE = "mysql";
+        public const int MYSQL_PORT = 3306;
 
         public override string DatabaseName => base.DatabaseName ?? _databaseName;
 
@@ -19,10 +19,10 @@ namespace TestContainers.Core.Containers
         public override string Password => base.Password ?? _password;
 
         string _databaseName = "test";
-        string _userName = "postgres";
+        string _userName = "root";
         string _password = "Password123";
 
-        public override string ConnectionString => $"Host={GetDockerHostIpAddress()};Port={GetMappedPort(POSTGRESQL_PORT)};Username={UserName};pwd={Password}";
+        public override string ConnectionString => $"Server={GetDockerHostIpAddress()};Port={GetMappedPort(MYSQL_PORT)};UID={UserName};pwd={Password};SslMode=none;";
 
         protected override string TestQueryString => "SELECT 1";
 
@@ -30,29 +30,27 @@ namespace TestContainers.Core.Containers
         {
             await base.WaitUntilContainerStarted();
 
-            var connection = new NpgsqlConnection(ConnectionString);
+            var connection = new MySqlConnection(ConnectionString);
 
             var result = await Policy
                 .TimeoutAsync(TimeSpan.FromMinutes(2))
                 .WrapAsync(Policy
-                    .Handle<NpgsqlException>()
-                    .Or<SocketException>()
+                    .Handle<MySqlException>()
                     .WaitAndRetryForeverAsync(
                         iteration => TimeSpan.FromSeconds(10)))
                 .ExecuteAndCaptureAsync(async () =>
                 {
                     await connection.OpenAsync();
 
-                    var cmd = new NpgsqlCommand(TestQueryString, connection);
-                    await cmd.ExecuteScalarAsync();
+                    var cmd = new MySqlCommand(TestQueryString, connection);
+                    var reader = await cmd.ExecuteScalarAsync();
                 });
 
             if (result.Outcome == OutcomeType.Failure)
             {
                 connection.Dispose();
-                throw new Exception(result.FinalException.Message, result.FinalException);
+                throw new Exception(result.FinalException.Message);
             }
-
         }
     }
 }
