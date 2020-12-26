@@ -156,7 +156,10 @@ namespace TestContainers.Core.Containers
 
         public async Task Stop()
         {
-            if (string.IsNullOrWhiteSpace(_containerId)) return;
+            if (string.IsNullOrWhiteSpace(_containerId))
+            {
+                return;
+            }
 
             await _dockerClient.Containers.StopContainerAsync(ContainerInspectResponse.ID, new ContainerStopParameters());
             await _dockerClient.Containers.RemoveContainerAsync(ContainerInspectResponse.ID, new ContainerRemoveParameters());

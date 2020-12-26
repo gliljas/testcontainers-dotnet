@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -130,8 +131,8 @@ namespace TestContainers.Containers.WaitStrategies
             catch (TimeoutException e)
             {
                 throw new ContainerLaunchException(string.Format(
-                    "Timed out waiting for URL to be accessible (%s should return HTTP %s)", uri, statusCodes.isEmpty() ?
-                        HttpURLConnection.HTTP_OK : statusCodes));
+                    "Timed out waiting for URL to be accessible (%s should return HTTP %s)", uri, !_statusCodes.Any() ?
+                        HttpStatusCode.OK : _statusCodes));
             }
         }
 

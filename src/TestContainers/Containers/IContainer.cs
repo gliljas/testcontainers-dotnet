@@ -97,14 +97,14 @@ namespace TestContainers.Containers
         /// </summary>
         /// <param name="ct">Cancellation token</param>
         /// <returns>A task that completes when the container fully started</returns>
-        Task StartAsync(CancellationToken ct = default);
+        Task Start(CancellationToken ct = default);
 
         /// <summary>
         /// Stops the container
         /// </summary>
         /// <param name="ct">Cancellation token</param>
         /// <returns>A task that completes when the container fully stops</returns>
-        Task StopAsync(CancellationToken ct = default);
+        Task Stop(CancellationToken ct = default);
 
         /// <summary>
         /// Gets a network host address for this docker instance

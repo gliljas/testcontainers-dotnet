@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TestContainers.Core.Containers;
@@ -16,7 +16,7 @@ namespace TestContainers.Containers.WaitStrategies
             {
                 if (log.isDebugEnabled())
                 {
-                    log.debug("Liveness check ports of {} is empty. Not waiting.", waitStrategyTarget.getContainerInfo().getName());
+                    log.debug("Liveness check ports of {} is empty. Not waiting.", _waitStrategyTarget.GetContainerInfo().Name);
                 }
                 return;
             }
@@ -43,6 +43,10 @@ namespace TestContainers.Containers.WaitStrategies
                         externalLivenessCheckPorts +
                         " should be listening)");
             }
+        }
+        private ISet<int> GetInternalPorts(ISet<int> externalLivenessCheckPorts, List<int> exposedPorts)
+        {
+            return new HashSet<int>(exposedPorts.Where(it => externalLivenessCheckPorts.Contains(_waitStrategyTarget.GetMappedPort(it))));
         }
     }
 }
