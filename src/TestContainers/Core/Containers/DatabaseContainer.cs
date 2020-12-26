@@ -1,6 +1,6 @@
 namespace TestContainers.Core.Containers
 {
-    public abstract class DatabaseContainer : Container
+    public abstract class DatabaseContainer : GenericContainer
     {
         protected int GetStartupTimeoutSeconds => 120;
 

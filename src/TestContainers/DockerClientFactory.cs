@@ -26,6 +26,6 @@ namespace TestContainers
                 return instance;
             }
         }
-        public DockerClient Client() => strategy.GetClient();
+        public IDockerClient Client() => strategy.GetClient();
     }
 }

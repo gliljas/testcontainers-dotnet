@@ -21,7 +21,7 @@ namespace TestContainers
                 .Select(type => (Activator.CreateInstance(type) as DockerClientProviderStrategy))
                 .SingleOrDefault(strategy => strategy.IsApplicable());
 
-        public DockerClient GetClient() => Config.CreateClient();
+        public IDockerClient GetClient() => Config.CreateClient();
     }
 }
 

@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using Docker.DotNet;
+using TestContainers.Containers;
+using TestContainers.Containers.Mounts;
 using TestContainers.Core.Containers;
 
 namespace TestContainers.Core.Builders
@@ -12,7 +14,7 @@ namespace TestContainers.Core.Builders
     }
 
     public abstract class ContainerBuilder<TContainer, TBuilder>
-        where TContainer : Container, new()
+        where TContainer : GenericContainer, new()
         where TBuilder : ContainerBuilder<TContainer, TBuilder>, new()
     {
         protected Func<TContainer, TContainer>
@@ -51,6 +53,28 @@ namespace TestContainers.Core.Builders
             return (TBuilder) this;
         }
 
+        public TBuilder WithFileSystemBind(string hostPath, string containerPath, AccessMode mode)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                //container
+                return container;
+            });
+
+            return (TBuilder) this;
+        }
+
+        public TBuilder WithVolumesFrom(IContainer sourceContainer, AccessMode mode)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                //container.ExposedPorts = ports;
+                return container;
+            });
+
+            return (TBuilder) this;
+        }
+
         public TBuilder WithPortBindings(params (int ExposedPort, int PortBinding)[] portBindings)
         {
             fn = FnUtils.Compose(fn, (container) =>
@@ -61,7 +85,16 @@ namespace TestContainers.Core.Builders
 
             return (TBuilder) this;
         }
+        public TBuilder WithEnv(string key, string value)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                //container.EnvironmentVariables = keyValuePairs;
+                return container;
+            });
 
+            return (TBuilder) this;
+        }
         public TBuilder WithEnv(params (string key, string value)[] keyValuePairs)
         {
             fn = FnUtils.Compose(fn, (container) =>
@@ -84,6 +117,17 @@ namespace TestContainers.Core.Builders
             return (TBuilder) this;
         }
 
+        public TBuilder WithLabels(params (string key, string value)[] keyValuePairs)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                container.Labels = keyValuePairs;
+                return container;
+            });
+
+            return (TBuilder) this;
+        }
+
         public TBuilder WithMountPoints(params (string sourcePath, string targetPath, string type)[] mounts)
         {
             fn = FnUtils.Compose(fn, (container) =>
@@ -95,7 +139,7 @@ namespace TestContainers.Core.Builders
             return (TBuilder) this;
         }
 
-        public TBuilder WithCmd(params string[] commands)
+        public TBuilder WithCommand(params string[] commands)
         {
             fn = FnUtils.Compose(fn, (container) =>
             {
@@ -105,6 +149,46 @@ namespace TestContainers.Core.Builders
 
             return (TBuilder) this;
         }
+
+        public TBuilder WithNetworkMode(string networkMode)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                container.NetworkMode = networkMode;
+                return container;
+            });
+            return (TBuilder) this;
+        }
+        public TBuilder WithNetwork(INetwork network)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                container.Network = network;
+                return container;
+            });
+            return (TBuilder) this;
+        }
+
+        public TBuilder WithNetworkAliases(params string[] aliases)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                //container.NetworkAliases = aliases;
+                return container;
+            });
+            return (TBuilder) this;
+        }
+
+        public TBuilder WithPrivilegedMode(bool mode)
+        {
+            fn = FnUtils.Compose(fn, (container) =>
+            {
+                container.PrivilegedMode = mode;
+                return container;
+            });
+            return (TBuilder) this;
+        }
+
 
         public virtual TContainer Build() =>
             fn(null);

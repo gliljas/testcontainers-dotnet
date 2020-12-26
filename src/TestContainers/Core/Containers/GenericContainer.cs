@@ -12,12 +12,12 @@ using Polly;
 
 namespace TestContainers.Core.Containers
 {
-    public class Container
+    public class GenericContainer
     {
         private const string TcpExposedPortFormat = "{0}/tcp";
 
         static readonly UTF8Encoding Utf8EncodingWithoutBom = new UTF8Encoding(false);
-        readonly DockerClient _dockerClient;
+        readonly IDockerClient _dockerClient;
         string _containerId { get; set; }
         public string DockerImageName { get; set; }
         public int[] ExposedPorts { get; set; }
@@ -27,8 +27,11 @@ namespace TestContainers.Core.Containers
         public ContainerInspectResponse ContainerInspectResponse { get; set; }
         public (string SourcePath, string TargetPath, string Type)[] Mounts { get; set; }
         public string[] Commands { get; set; }
+        public INetwork Network { get; internal set; }
+        public string NetworkMode { get; internal set; }
+        public bool PrivilegedMode { get; internal set; }
 
-        public Container() =>
+        public GenericContainer() =>
             _dockerClient = DockerClientFactory.Instance.Client();
 
         public async Task Start()
@@ -129,6 +132,7 @@ namespace TestContainers.Core.Containers
             {
                 HostConfig = new HostConfig
                 {
+                    Privileged = PrivilegedMode,
                     PortBindings = PortBindings?.ToDictionary(
                         e => string.Format(TcpExposedPortFormat, e.ExposedPort),
                         e => (IList<PortBinding>) new List<PortBinding>
@@ -143,8 +147,9 @@ namespace TestContainers.Core.Containers
                         Source = m.SourcePath,
                         Target = m.TargetPath,
                         Type = m.Type,
-                    }).ToList(),
+                        }).ToList(),
                     PublishAllPorts = true,
+                    NetworkMode = NetworkMode
                 }
             };
         }
@@ -184,7 +189,7 @@ namespace TestContainers.Core.Containers
             {
                 AttachStderr = true,
                 AttachStdout = true,
-                Cmd = command,
+                Cmd = command
             };
 
             var response = await _dockerClient.Containers.ExecCreateContainerAsync(_containerId, containerExecCreateParams);
@@ -211,5 +216,10 @@ namespace TestContainers.Core.Containers
                     return null;
             }
         }
+
+        protected virtual Task ContainerStarting() => Task.CompletedTask;
+
+        protected virtual Task ContainerStarted() => Task.CompletedTask;
+
     }
 }

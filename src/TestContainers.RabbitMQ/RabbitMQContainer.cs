@@ -6,7 +6,7 @@ using TestContainers.Core.Containers;
 
 namespace TestContainers.RabbitMQ
 {
-    public class RabbitMQContainer : Container
+    public class RabbitMQContainer : GenericContainer
     {
         public const string IMAGE = "rabbitmq:3.7-alpine";
         public const int Port = 5672;

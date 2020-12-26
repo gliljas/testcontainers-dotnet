@@ -10,9 +10,9 @@ namespace TestContainers.Tests.ContainerTests
     public class GenericContainerFixture : IAsyncLifetime
     {
         public ContainerInspectResponse ContainerInfo => _container.ContainerInspectResponse;
-        readonly Container _container;
+        readonly GenericContainer _container;
 
-        public GenericContainerFixture() => _container = new GenericContainerBuilder<Container>()
+        public GenericContainerFixture() => _container = new GenericContainerBuilder<GenericContainer>()
             .Begin()
             .WithImage("alpine:latest")
             .WithLabel(("your.custom", "label"))
@@ -40,7 +40,7 @@ namespace TestContainers.Tests.ContainerTests
         [InlineData("test.de:55/alpine", "test.de:55/alpine:latest")]
         public void WithImage_ExtractFromImageAndTag(string path, string tag)
         {
-            var container = new GenericContainerBuilder<Container>()
+            var container = new GenericContainerBuilder<GenericContainer>()
                 .Begin()
                 .WithImage(path)
                 .Build();
@@ -51,7 +51,7 @@ namespace TestContainers.Tests.ContainerTests
         [Fact]
         public async Task WithExecCommand()
         {
-            var container = new GenericContainerBuilder<Container>()
+            var container = new GenericContainerBuilder<GenericContainer>()
                 .Begin()
                 .WithImage("alpine:latest")
                 .Build();
