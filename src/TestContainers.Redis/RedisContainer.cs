@@ -3,13 +3,19 @@ using System.Threading.Tasks;
 using Polly;
 using StackExchange.Redis;
 using TestContainers.Core.Containers;
+using TestContainers.Images;
 
 namespace TestContainers.Redis
 {
     public sealed class RedisContainer : DatabaseContainer
     {
         public const int Port = 6379;
-        public override string ConnectionString => $"{GetDockerHostIpAddress()}:{GetMappedPort(Port)}";
+
+        public RedisContainer() : base(DockerImageName.Parse("Redis"))
+        {
+
+        }
+        public override string ConnectionString => $"{Host}:{GetMappedPort(Port)}";
 
         protected override async Task WaitUntilContainerStarted()
         {

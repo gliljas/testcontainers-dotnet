@@ -14,15 +14,15 @@ namespace TestContainers.Core.Builders
     }
 
     public abstract class ContainerBuilder<TContainer, TBuilder>
-        where TContainer : GenericContainer, new()
-        where TBuilder : ContainerBuilder<TContainer, TBuilder>, new()
+        where TContainer : GenericContainer//, new()
+        where TBuilder : ContainerBuilder<TContainer, TBuilder>//, new()
     {
         protected Func<TContainer, TContainer>
         fn = null;
 
         public virtual TBuilder Begin()
         {
-            fn = (ignored) => new TContainer();
+            fn = (ignored) => null;// new TContainer();
             return (TBuilder) this;
         }
 
@@ -35,7 +35,7 @@ namespace TestContainers.Core.Builders
                 {
                     dockerImageName = $"{dockerImageName}:latest";
                 }
-                container.DockerImageName = dockerImageName;
+                container.ImageName = dockerImageName;
                 return container;
             });
 

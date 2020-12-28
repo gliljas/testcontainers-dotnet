@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using Polly;
 using TestContainers.Core.Containers;
+using TestContainers.Images;
 
 namespace TestContainers.MySql
 {
@@ -22,7 +23,12 @@ namespace TestContainers.MySql
         string _userName = "root";
         string _password = "Password123";
 
-        public override string ConnectionString => $"Server={GetDockerHostIpAddress()};Port={GetMappedPort(MYSQL_PORT)};UID={UserName};pwd={Password};SslMode=none;";
+        public MySqlContainer() : base(DockerImageName.Parse(NAME))
+        {
+
+        }
+
+        public override string ConnectionString => $"Server={Host};Port={GetMappedPort(MYSQL_PORT)};UID={UserName};pwd={Password};SslMode=none;";
 
         protected override string TestQueryString => "SELECT 1";
 

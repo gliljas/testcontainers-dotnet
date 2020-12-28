@@ -1,3 +1,5 @@
+using TestContainers.Images;
+
 namespace TestContainers.Core.Containers
 {
     public abstract class DatabaseContainer : GenericContainer
@@ -6,7 +8,7 @@ namespace TestContainers.Core.Containers
 
         protected int GetConnectTimeoutSeconds => 120;
 
-        public DatabaseContainer() : base()
+        protected DatabaseContainer(DockerImageName dockerImageName) : base(dockerImageName)
         {
 
         }

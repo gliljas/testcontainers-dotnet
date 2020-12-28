@@ -9,7 +9,7 @@ namespace TestContainers.Containers.WaitStrategies
 {
     public abstract class AbstractWaitStrategy : IWaitStrategy
     {
-        private TimeSpan _startupTimeout;
+        protected TimeSpan _startupTimeout;
         protected IWaitStrategyTarget _waitStrategyTarget;
 
         public Task WaitUntil(IDockerClient dockerClient, IContainer container, CancellationToken ct = default)

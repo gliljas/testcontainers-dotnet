@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,28 +18,139 @@ namespace TestContainers.Containers.WaitStrategies
         private bool _tlsEnabled;
         private HttpMethod _method;
         private Predicate<string> _responsePredicate;
-        private string _username;
-        private List<int> _statusCodes;
+        private List<int> _statusCodes = new List<int>();
         private Predicate<int> _statusCodePredicate;
+        private int? _livenessPort;
+        private TimeSpan _readTimeout = TimeSpan.FromSeconds(1);
+        private AuthenticationHeaderValue _authorizationHeader;
 
         public HttpWaitStrategy()
         {
 
         }
 
-        public HttpWaitStrategy ForPath(string path)
+        /// <summary>
+        /// Waits for the given status code.
+        /// </summary>
+        /// <param name="statusCode">an expected status code</param>
+        /// <returns>this</returns>
+        public HttpWaitStrategy ForStatusCode(int statusCode)
         {
-            throw new NotImplementedException();
+            _statusCodes.Add(statusCode);
+            return this;
         }
 
+        public HttpWaitStrategy ForStatusCodeMatching(Predicate<int> statusCodePredicate)
+        {
+            _statusCodePredicate = statusCodePredicate;
+            return this;
+        }
+
+        /// <summary>
+        /// Waits for the given path.
+        /// </summary>
+        /// <param name="path">the path to check</param>
+        /// <returns>this</returns>
+        public HttpWaitStrategy ForPath(string path)
+        {
+            _path = path;
+            return this;
+        }
+
+        /// <summary>
+        /// Wait for the given port.
+        /// </summary>
+        /// <param name="port">the given port</param>
+        /// <returns>this</returns>
+        public HttpWaitStrategy ForPort(int port)
+        {
+            _livenessPort = port;
+            return this;
+        }
+
+        /// <summary>
+        /// Indicates that the status check should use HTTPS.
+        /// </summary>
+        /// <returns>this</returns>
         public HttpWaitStrategy UsingTls()
         {
-            throw new NotImplementedException();
+            _tlsEnabled = true;
+            return this;
+        }
+
+        /// <summary>
+        /// Indicates the HTTP method to use (GET by default).
+        /// </summary>
+        /// <param name="method">the HTTP method</param>
+        /// <returns></returns>
+        public HttpWaitStrategy WithMethod(HttpMethod method)
+        {
+            _method = method;
+            return this;
+        }
+
+        /// <summary>
+        /// Authenticate with HTTP Basic Authorization credentials. 
+        /// </summary>
+        /// <param name="username">the username</param>
+        /// <param name="password">the password</param>
+        /// <returns></returns>
+        public HttpWaitStrategy WithBasicCredentials(string username, string password)
+        {
+            _authorizationHeader = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(
+            Encoding.ASCII.GetBytes(
+               $"{username}:{password}")));
+            return this;
+        }
+
+        /// <summary>
+        /// Set the HTTP connection's read timeout.
+        /// </summary>
+        /// <param name="timeout">the timeout (minimum 1 millisecond)</param>
+        /// <returns>this</returns>
+        public HttpWaitStrategy WithReadTimeout(TimeSpan timeout)
+        {
+            if (timeout.TotalMilliseconds < 1)
+            {
+                throw new ArgumentOutOfRangeException("you cannot specify a value smaller than 1 ms");
+            }
+            _readTimeout = timeout;
+            return this;
+        }
+
+        /// <summary>
+        /// Waits for the response to pass the given predicate
+        /// </summary>
+        /// <param name="responsePredicate">The predicate to test the response against</param>
+        /// <returns>this</returns>
+        public HttpWaitStrategy ForResponsePredicate(Predicate<string> responsePredicate)
+        {
+            _responsePredicate = responsePredicate;
+            return this;
         }
 
         protected override async Task WaitUntilReady(CancellationToken cancellationToken)
         {
             var containerName = _waitStrategyTarget.GetContainerInfo().Name;
+
+            var livenessCheckPort = -1;
+
+            if (_livenessPort.HasValue)
+            {
+                livenessCheckPort = await _waitStrategyTarget.GetMappedPort(_livenessPort.Value, cancellationToken);
+            }
+            else
+            {
+                var ports = await GetLivenessCheckPorts(cancellationToken);
+                if (ports != null && ports.Any())
+                {
+                    livenessCheckPort = ports.First();
+                }
+                else
+                {
+
+                }
+            }
 
             //final Integer livenessCheckPort = livenessPort.map(waitStrategyTarget::getMappedPort).orElseGet(()-> {
             //    final Set<Integer> livenessCheckPorts = getLivenessCheckPorts();
@@ -50,11 +162,11 @@ namespace TestContainers.Containers.WaitStrategies
             //    return livenessCheckPorts.iterator().next();
             //});
 
-            //if (null == livenessCheckPort || -1 == livenessCheckPort)
-            //{
-            //    return;
-            //}
-            int livenessCheckPort = 0;
+            if (-1 == livenessCheckPort)
+            {
+                return;
+            }
+            //int livenessCheckPort = 0;
             Uri uri = await BuildLivenessUri(livenessCheckPort);//.toString();
 
             //log.info("{}: Waiting for {} seconds for URL: {}", containerName, startupTimeout.getSeconds(), uri);
@@ -66,7 +178,7 @@ namespace TestContainers.Containers.WaitStrategies
                   Policy.Handle<Exception>()
                     .WaitAndRetryForeverAsync(attempt => TimeSpan.FromSeconds(1), null));
 
-                var result = await p.ExecuteAndCaptureAsync(async token =>
+                await p.ExecuteAsync(async (token) =>
                 {
 
                     var request = new HttpRequestMessage(_method, uri);
@@ -74,11 +186,9 @@ namespace TestContainers.Containers.WaitStrategies
                     // connection.setReadTimeout(Math.toIntExact(readTimeout.toMillis()));
 
                     // authenticate
-                    if (!string.IsNullOrEmpty(_username))
+                    if (_authorizationHeader != null)
                     {
-                        //request.Headers.Authorization=
-                        //connection.setRequestProperty(HEADER_AUTHORIZATION, buildAuthString(username, password));
-                        //connection.setUseCaches(false);
+                        request.Headers.Authorization = _authorizationHeader;
                     }
 
                     var response = await new HttpClient().SendAsync(request, token);
@@ -107,7 +217,7 @@ namespace TestContainers.Containers.WaitStrategies
                         // We have both predicate and status code
                         predicate = (status) => _statusCodePredicate(status) || _statusCodes.Contains(status);
                     }
-                    if (!predicate(response.StatusCode))
+                    if (!predicate((int)response.StatusCode))
                     {
                         // throw new RuntimeException(String.format("HTTP response code was: %s",
                         //    connection.getResponseCode()));
@@ -115,7 +225,7 @@ namespace TestContainers.Containers.WaitStrategies
 
                     if (_responsePredicate != null)
                     {
-                        var responseBody = await response.Content.ReadAsStringAsync(token);
+                        var responseBody = await response.Content.ReadAsStringAsync();
 
                         //log.trace("Get response {}", responseBody);
 
@@ -126,36 +236,25 @@ namespace TestContainers.Containers.WaitStrategies
                         }
                     }
 
-                });
+                }, cancellationToken);
             }
             catch (TimeoutException e)
             {
-                throw new ContainerLaunchException(string.Format(
-                    "Timed out waiting for URL to be accessible (%s should return HTTP %s)", uri, !_statusCodes.Any() ?
-                        HttpStatusCode.OK : _statusCodes));
+                //throw new ContainerLaunchException(string.Format(
+                //    "Timed out waiting for URL to be accessible (%s should return HTTP %s)", uri, !_statusCodes.Any() ?
+                //        HttpStatusCode.OK : _statusCodes));
             }
         }
 
-        /**
-     * Build the URI on which to check if the container is ready.
-     *
-     * @param livenessCheckPort the liveness port
-     * @return the liveness URI
-     */
+        /// <summary>
+        /// Build the URI on which to check if the container is ready.
+        /// </summary>
+        /// <param name="livenessCheckPort">the liveness port</param>
+        /// <returns>the liveness URI</returns>
         private async Task<Uri> BuildLivenessUri(int livenessCheckPort)
         {
             var scheme = (_tlsEnabled ? "https" : "http") + "://";
-            var host = await _waitStrategyTarget.GetHost();
-
-            //string portSuffix;
-            //if ((_tlsEnabled && 443 == livenessCheckPort) || (!_tlsEnabled && 80 == livenessCheckPort))
-            //{
-            //    portSuffix = "";
-            //}
-            //else
-            //{
-            //    portSuffix = $":{livenessCheckPort}";
-            //}
+            var host =_waitStrategyTarget.Host;
 
             return new UriBuilder(scheme,host,livenessCheckPort,_path).Uri;
         }

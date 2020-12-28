@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace TestContainers.Containers.WaitStrategies
 {
@@ -75,9 +76,11 @@ namespace TestContainers.Containers.WaitStrategies
             return new DockerHealthcheckWaitStrategy();
         }
 
-        public interface IRateLimiter
-        {
+        
+    }
 
-        }
+    public interface IRateLimiter
+    {
+        Task<T> GetWhenReady<T>(Func<Task<T>> func);
     }
 }

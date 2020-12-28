@@ -8,19 +8,19 @@ using Polly;
 
 namespace TestContainers.Containers.StartupStrategies
 {
-    public abstract class AbstractStartupCheckStrategy
+    public abstract class AbstractStartupCheckStrategy : IStartupCheckStrategy
     {
-        private Polly.Policy p = Policy
-               .TimeoutAsync(TimeSpan.FromMinutes(2))
-               .WrapAsync(Policy
-                    .HandleResult<StartupStatus>(x=>x==StartupStatus.NotYetKnown)
+        private Policy<StartupStatus> p = Policy
+               .TimeoutAsync<StartupStatus>(TimeSpan.FromMinutes(2))
+               .WrapAsync<StartupStatus>(Policy
+                    .HandleResult<StartupStatus>(x => x == StartupStatus.NotYetKnown)
                     .WaitAndRetryForeverAsync(
                        iteration => TimeSpan.FromSeconds(1),
-                       (exception, timespan) => Console.WriteLine(exception.Message)));
+                       (exception, timespan) => Console.WriteLine("hjhj")));
 
         public async Task<bool> WaitUntilStartupSuccessful(IDockerClient dockerClient, string containerId)
         {
-            return (await p.ExecuteAsync(async ()=> await CheckStartupState(dockerClient, containerId))) == StartupStatus.Successful;
+            return (await p.ExecuteAsync(async () => await CheckStartupState(dockerClient, containerId))) == StartupStatus.Successful;
         }
 
         public abstract Task<StartupStatus> CheckStartupState(IDockerClient dockerClient, string containerId);

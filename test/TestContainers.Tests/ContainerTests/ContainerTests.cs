@@ -45,7 +45,7 @@ namespace TestContainers.Tests.ContainerTests
                 .WithImage(path)
                 .Build();
 
-            Assert.Equal(tag, container.DockerImageName);
+            Assert.Equal(tag, container.ImageName);
         }
 
         [Fact]

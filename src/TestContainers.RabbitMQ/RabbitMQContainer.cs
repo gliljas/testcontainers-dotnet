@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Polly;
 using RabbitMQ.Client;
 using TestContainers.Core.Containers;
+using TestContainers.Images;
 
 namespace TestContainers.RabbitMQ
 {
@@ -11,6 +12,11 @@ namespace TestContainers.RabbitMQ
         public const string IMAGE = "rabbitmq:3.7-alpine";
         public const int Port = 5672;
         public const int DefaultRequestedHeartbeatInSec = 60;
+
+        public RabbitMQContainer() : base(DockerImageName.Parse(IMAGE))
+        {
+
+        }
 
         public string UserName { get; set; } = "guest";
         public string Password { get; set; } = "guest";
@@ -22,7 +28,7 @@ namespace TestContainers.RabbitMQ
         IConnectionFactory ConnectionFactory =>
             _connectionFactory ?? (_connectionFactory = new ConnectionFactory
             {
-                HostName = GetDockerHostIpAddress(),
+                HostName = Host,
                 Port = GetMappedPort(Port),
                 VirtualHost = VirtualHost,
                 UserName = UserName,

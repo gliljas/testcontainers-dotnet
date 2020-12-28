@@ -1,10 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
+using Docker.DotNet;
 
 namespace TestContainers.Containers.StartupStrategies
 {
-    class IsRunningStartupCheckStrategy
+    public class IsRunningStartupCheckStrategy : AbstractStartupCheckStrategy
     {
+        public override Task<StartupStatus> CheckStartupState(IDockerClient dockerClient, string containerId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

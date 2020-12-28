@@ -14,4 +14,14 @@ namespace TestContainers.Images
         }
 
     }
+
+    public class RemoteDockerImage
+    {
+        private DockerImageName _dockerImageName;
+
+        public RemoteDockerImage(DockerImageName dockerImageName)
+        {
+            _dockerImageName = dockerImageName;
+        }
+    }
 }

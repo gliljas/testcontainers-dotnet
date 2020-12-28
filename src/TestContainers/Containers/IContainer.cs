@@ -13,7 +13,7 @@ namespace TestContainers.Containers
     /// <summary>
     /// A docker container
     /// </summary>
-    public interface IContainer
+    public interface IContainer : IContainerState
     {
         /// <summary>
         /// Gets the docker image used for this container
@@ -21,10 +21,10 @@ namespace TestContainers.Containers
         [NotNull]
         IImage DockerImage { get; }
 
-        /// <summary>
-        /// Gets the container id after it has been created
-        /// </summary>
-        string ContainerId { get; }
+        ///// <summary>
+        ///// Gets the container id after it has been created
+        ///// </summary>
+        //string ContainerId { get; }
 
         /// <summary>
         /// List of ports to be exposed on the container

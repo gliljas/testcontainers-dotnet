@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Npgsql;
 using Polly;
 using TestContainers.Core.Containers;
+using TestContainers.Images;
 
 namespace TestContainers.PostgreSql
 {
@@ -23,7 +24,12 @@ namespace TestContainers.PostgreSql
         string _userName = "postgres";
         string _password = "Password123";
 
-        public override string ConnectionString => $"Host={GetDockerHostIpAddress()};Port={GetMappedPort(POSTGRESQL_PORT)};Username={UserName};pwd={Password}";
+        public PostgreSqlContainer() : base(DockerImageName.Parse(IMAGE))
+        {
+
+        }
+
+        public override string ConnectionString => $"Host={Host};Port={GetMappedPort(POSTGRESQL_PORT)};Username={UserName};pwd={Password}";
 
         protected override string TestQueryString => "SELECT 1";
 
