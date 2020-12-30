@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using Polly;
@@ -32,9 +33,9 @@ namespace TestContainers.MySql
 
         protected override string TestQueryString => "SELECT 1";
 
-        protected override async Task WaitUntilContainerStarted()
+        protected override async Task WaitUntilContainerStarted(CancellationToken cancellationToken)
         {
-            await base.WaitUntilContainerStarted();
+            await base.WaitUntilContainerStarted(cancellationToken);
 
             var connection = new MySqlConnection(ConnectionString);
 

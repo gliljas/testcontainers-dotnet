@@ -10,6 +10,10 @@ namespace TestContainers
     {
         static volatile DockerClientFactory instance;
         static object syncRoot = new Object();
+        public static readonly string TESTCONTAINERS_SESSION_ID_LABEL;
+        public static readonly string TESTCONTAINERS_LABEL;
+        public static readonly string SESSION_ID = Guid.NewGuid().ToString("N");
+
         DockerClientProviderStrategy strategy { get; } = DockerClientProviderStrategy.GetFirstValidStrategy();
         public static DockerClientFactory Instance
         {
@@ -26,6 +30,9 @@ namespace TestContainers
                 return instance;
             }
         }
+
+        public static IDockerClient LazyClient => LazyDockerClient.Instance;
+
         public IDockerClient Client() => strategy.GetClient();
     }
 }

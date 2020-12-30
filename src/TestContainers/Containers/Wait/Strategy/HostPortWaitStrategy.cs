@@ -43,7 +43,7 @@ namespace TestContainers.Containers.WaitStrategies
                         await RateLimiter.GetWhenReady(async () => await internalCheck() && await externalCheck())
                     );
             }
-            catch (TimeoutException e)
+            catch (TimeoutException)
             {
                 throw new ContainerLaunchException("Timed out waiting for container port to open (" +
                         _waitStrategyTarget.Host +

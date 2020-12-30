@@ -1,6 +1,6 @@
 using System;
 
-namespace TestContainers.Core.Containers
+namespace TestContainers
 {
     public class ContainerLaunchException : Exception
     {

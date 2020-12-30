@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using StackExchange.Redis;
@@ -17,9 +18,9 @@ namespace TestContainers.Redis
         }
         public override string ConnectionString => $"{Host}:{GetMappedPort(Port)}";
 
-        protected override async Task WaitUntilContainerStarted()
+        protected override async Task WaitUntilContainerStarted(CancellationToken cancellationToken)
         {
-            await base.WaitUntilContainerStarted();
+            await base.WaitUntilContainerStarted(cancellationToken);
 
             var policyResult = await Policy
                .TimeoutAsync(TimeSpan.FromMinutes(2))

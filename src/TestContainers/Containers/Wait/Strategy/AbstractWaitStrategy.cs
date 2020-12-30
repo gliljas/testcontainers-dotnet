@@ -7,7 +7,7 @@ using Docker.DotNet;
 
 namespace TestContainers.Containers.WaitStrategies
 {
-    public abstract class AbstractWaitStrategy : IWaitStrategy
+    public abstract class AbstractWaitStrategy : IWaitStrategy 
     {
         protected TimeSpan _startupTimeout;
         protected IWaitStrategyTarget _waitStrategyTarget;
@@ -17,7 +17,7 @@ namespace TestContainers.Containers.WaitStrategies
             throw new NotImplementedException();
         }
 
-        public Task WaitUntilReady(IWaitStrategyTarget target, CancellationToken cancellationToken = default)
+        public virtual Task WaitUntilReady(IWaitStrategyTarget target, CancellationToken cancellationToken = default)
         {
             _waitStrategyTarget = target;
             return WaitUntilReady(cancellationToken);
@@ -32,7 +32,7 @@ namespace TestContainers.Containers.WaitStrategies
      * @return this
      * @see WaitStrategy#waitUntilReady(WaitStrategyTarget)
      */
-        public IWaitStrategy WithStartupTimeout(TimeSpan startupTimeout)
+        public virtual IWaitStrategy WithStartupTimeout(TimeSpan startupTimeout)
         {
             _startupTimeout = startupTimeout;
             return this;

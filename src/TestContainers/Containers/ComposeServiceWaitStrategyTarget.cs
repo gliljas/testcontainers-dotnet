@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Docker.DotNet.Models;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Core.Containers;
 
-namespace TestContainers
+namespace TestContainers.Containers
 {
     public class ComposeServiceWaitStrategyTarget : AbstractWaitStrategyTarget
     {
@@ -18,20 +17,22 @@ namespace TestContainers
 
         public ComposeServiceWaitStrategyTarget(IContainer container, GenericContainer proxyContainer, Dictionary<int,int> mappedPorts)
         {
-            if (mappedPorts is null)
-            {
-                throw new ArgumentNullException(nameof(mappedPorts));
-            }
-
-            _container = container ?? throw new ArgumentNullException(nameof(container));
-            _proxyContainer = proxyContainer ?? throw new ArgumentNullException(nameof(proxyContainer));
+            _container = container;
+            _proxyContainer = proxyContainer;
             _mappedPorts = mappedPorts.ToDictionary(x => x.Key, x => x.Value);
         }
 
+        public override Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<int>>(_mappedPorts.Keys.ToList());
+        }
+
+        public override Task<int> GetMappedPort(int originalPort, CancellationToken cancellationToken = default)
+        {
+            return _proxyContainer.GetMappedPort(_mappedPorts[originalPort], cancellationToken);
+        }
         public override string Host => _proxyContainer.Host;
 
         public override string ContainerId => _container.ContainerId;
-
-        public override ContainerInspectResponse ContainerInfo => throw new NotImplementedException();
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
 using Polly;
@@ -33,9 +34,9 @@ namespace TestContainers.PostgreSql
 
         protected override string TestQueryString => "SELECT 1";
 
-        protected override async Task WaitUntilContainerStarted()
+        protected override async Task WaitUntilContainerStarted(CancellationToken cancellationToken)
         {
-            await base.WaitUntilContainerStarted();
+            await base.WaitUntilContainerStarted(cancellationToken);
 
             var connection = new NpgsqlConnection(ConnectionString);
 
@@ -48,10 +49,10 @@ namespace TestContainers.PostgreSql
                         iteration => TimeSpan.FromSeconds(10)))
                 .ExecuteAndCaptureAsync(async () =>
                 {
-                    await connection.OpenAsync();
+                    await connection.OpenAsync(cancellationToken);
 
                     var cmd = new NpgsqlCommand(TestQueryString, connection);
-                    await cmd.ExecuteScalarAsync();
+                    await cmd.ExecuteScalarAsync(cancellationToken);
                 });
 
             if (result.Outcome == OutcomeType.Failure)

@@ -10,7 +10,7 @@ namespace TestContainers.Containers.WaitStrategies
     /// </summary>
     public interface IWaitStrategy
     {
-        Task WaitUntilReady(IWaitStrategyTarget waitStrategyTarget);
+        Task WaitUntilReady(IWaitStrategyTarget waitStrategyTarget, CancellationToken cancellationToken);
 
         IWaitStrategy WithStartupTimeout(TimeSpan startupTimeout);
     }

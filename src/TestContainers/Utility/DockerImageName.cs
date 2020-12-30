@@ -1,11 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace TestContainers.Images
 {
     public sealed class DockerImageName
     {
+        public string UnversionedPart { get; internal set; }
+        public string VersionPart { get; internal set; }
+
         public static DockerImageName Parse(string fullImageName) => new DockerImageName(fullImageName);
 
         private DockerImageName(string fullImageName)
@@ -13,15 +14,9 @@ namespace TestContainers.Images
           
         }
 
-    }
-
-    public class RemoteDockerImage
-    {
-        private DockerImageName _dockerImageName;
-
-        public RemoteDockerImage(DockerImageName dockerImageName)
+        public string AsCanonicalNameString()
         {
-            _dockerImageName = dockerImageName;
+            throw new NotImplementedException();
         }
     }
 }

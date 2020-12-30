@@ -1,40 +1,40 @@
-using System.Threading.Tasks;
-using RabbitMQ.Client;
-using TestContainers.Core.Builders;
-using TestContainers.RabbitMQ;
-using Xunit;
+//using System.Threading.Tasks;
+//using RabbitMQ.Client;
+//using TestContainers.Core.Builders;
+//using TestContainers.RabbitMQ;
+//using Xunit;
 
-namespace TestContainers.Tests.ContainerTests
-{
-    public class RabbitMQFixture : IAsyncLifetime
-    {
-        public IConnection Connection => Container.Connection;
-        RabbitMQContainer Container { get; }
+//namespace TestContainers.Tests.ContainerTests
+//{
+//    public class RabbitMQFixture : IAsyncLifetime
+//    {
+//        public IConnection Connection => Container.Connection;
+//        RabbitMQContainer Container { get; }
 
-        public RabbitMQFixture() =>
-            Container = new GenericContainerBuilder<RabbitMQContainer>()
-                .Begin()
-                .WithImage(RabbitMQContainer.IMAGE)
-                .WithExposedPorts(RabbitMQContainer.Port)
-                .Build();
+//        public RabbitMQFixture() =>
+//            Container = new GenericContainerBuilder<RabbitMQContainer>()
+//                .Begin()
+//                .WithImage(RabbitMQContainer.IMAGE)
+//                .WithExposedPorts(RabbitMQContainer.Port)
+//                .Build();
 
-        public Task InitializeAsync() => Container.Start();
+//        public Task InitializeAsync() => Container.Start();
 
-        public Task DisposeAsync() => Container.Stop();
-    }
+//        public Task DisposeAsync() => Container.Stop();
+//    }
 
-    public class RabbitMQTests : IClassFixture<RabbitMQFixture>
-    {
-        RabbitMQFixture _fixture;
+//    public class RabbitMQTests : IClassFixture<RabbitMQFixture>
+//    {
+//        RabbitMQFixture _fixture;
 
-        public RabbitMQTests(RabbitMQFixture fixture) => _fixture = fixture;
+//        public RabbitMQTests(RabbitMQFixture fixture) => _fixture = fixture;
 
-        [Fact]
-        public void OpenModelTest()
-        {
-            var model = _fixture.Connection.CreateModel();
+//        [Fact]
+//        public void OpenModelTest()
+//        {
+//            var model = _fixture.Connection.CreateModel();
 
-            Assert.True(model.IsOpen);
-        }
-    }
-}
+//            Assert.True(model.IsOpen);
+//        }
+//    }
+//}

@@ -131,7 +131,7 @@ namespace TestContainers.Containers.WaitStrategies
 
         protected override async Task WaitUntilReady(CancellationToken cancellationToken)
         {
-            var containerName = _waitStrategyTarget.GetContainerInfo().Name;
+            var containerName = _waitStrategyTarget.ContainerInfo.Name;
 
             var livenessCheckPort = -1;
 
@@ -167,7 +167,7 @@ namespace TestContainers.Containers.WaitStrategies
                 return;
             }
             //int livenessCheckPort = 0;
-            Uri uri = await BuildLivenessUri(livenessCheckPort);//.toString();
+            Uri uri = BuildLivenessUri(livenessCheckPort);//.toString();
 
             //log.info("{}: Waiting for {} seconds for URL: {}", containerName, startupTimeout.getSeconds(), uri);
 
@@ -238,7 +238,7 @@ namespace TestContainers.Containers.WaitStrategies
 
                 }, cancellationToken);
             }
-            catch (TimeoutException e)
+            catch (TimeoutException)
             {
                 //throw new ContainerLaunchException(string.Format(
                 //    "Timed out waiting for URL to be accessible (%s should return HTTP %s)", uri, !_statusCodes.Any() ?
@@ -251,7 +251,7 @@ namespace TestContainers.Containers.WaitStrategies
         /// </summary>
         /// <param name="livenessCheckPort">the liveness port</param>
         /// <returns>the liveness URI</returns>
-        private async Task<Uri> BuildLivenessUri(int livenessCheckPort)
+        private Uri BuildLivenessUri(int livenessCheckPort)
         {
             var scheme = (_tlsEnabled ? "https" : "http") + "://";
             var host =_waitStrategyTarget.Host;

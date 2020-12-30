@@ -3,28 +3,36 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Polly;
 using TestContainers.Containers;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Images;
+using TestContainers.Lifecycle;
 
 namespace TestContainers.Core.Containers
 {
-    public class GenericContainer : AbstractWaitStrategyTarget
+    public class GenericContainer : AbstractWaitStrategyTarget, IStartable
     {
         private IStartupCheckStrategy _startupCheckStrategy = new IsRunningStartupCheckStrategy();
         private ILogger _logger = null;
         private string _containerId;
         private ContainerInspectResponse _containerInfo;
+        private RemoteDockerImage _image;
 
         protected IWaitStrategy WaitStrategy => Wait.DefaultWaitStrategy();
+
+        public override ContainerInspectResponse ContainerInfo => _containerInfo;
+
+        public string ImageName { get; private set; }
 
         //private const string TcpExposedPortFormat = "{0}/tcp";
 
@@ -32,6 +40,10 @@ namespace TestContainers.Core.Containers
         private readonly IDockerClient _dockerClient = DockerClientFactory.Instance.Client();
 
         private static readonly IRateLimiter DockerClientRateLimiter = null;
+        private readonly string COPIED_FILES_HASH_LABEL = "testcontainers.dotnet.copied_files.hash";
+        private readonly string HASH_LABEL = "testcontainers.dotnet.hash";
+        private INetwork _network;
+        private bool _shouldBeReused;
 
         //private readonly RemoteDockerImage _image;
 
@@ -59,20 +71,24 @@ namespace TestContainers.Core.Containers
 
         public GenericContainer(string dockerImageName)
         {
-            _image = image;
+            SetDockerImageName(dockerImageName);
+        }
+
+        public void SetDockerImageName(string dockerImageName)
+        {
+            _image = new RemoteDockerImage(dockerImageName);
         }
 
         //override 
 
-        public async Task Start()
+        public async Task Start(CancellationToken cancellationToken = default)
         {
             if (_containerId != null)
             {
                 return;
             }
 
-            _containerId = await Create();
-            await TryStart();
+            await DoStart(cancellationToken);
         }
 
         protected async Task DoStart(CancellationToken cancellationToken)
@@ -83,21 +99,22 @@ namespace TestContainers.Core.Containers
 
                 var startedAt = DateTimeOffset.Now;
 
-                _logger.LogDebug("Starting container: {dockerImageBane}", DockerImageName);
+                _logger.LogDebug("Starting container: {dockerImageBane}", ImageName);
 
                 var attempt = 0;
 
-                Policy
+                var startupAttempts = 3;
+
+                await Policy
                     .Handle<Exception>()//ex => !(ex is OperationCancelledException)
                     .OrResult<bool>(x => x == false)
-                    .Retry(1)
-                    .ExecuteAsync(async (context, token) =>
+                    .Retry(startupAttempts-1)
+                    .ExecuteAsync(async (token) =>
                     {
-                        _logger.LogDebug("Trying to start container: {} (attempt {}/{})", DockerImageName, Interlocked.Increment(ref attempt), startupAttempts);
-                        await TryStart(cancellationToken);
+                        _logger.LogDebug("Trying to start container: {imageName} (attempt {attempt}/{startupAttempts})", ImageName, Interlocked.Increment(ref attempt), startupAttempts);
+                        await TryStart(startedAt, token);
                         return true;
                     }
-
                     , cancellationToken);
 
             }
@@ -107,7 +124,7 @@ namespace TestContainers.Core.Containers
             }
         }
 
-        protected void Configure()
+        protected virtual void Configure()
         {
         }
 
@@ -115,7 +132,7 @@ namespace TestContainers.Core.Containers
         {
             try
             {
-                var dockerImageName = DockerImageName;
+                var dockerImageName = ImageName;
                 _logger.LogDebug("Starting container: {dockerImageName}", dockerImageName);
 
                 _logger.LogInformation("Creating container for image: {dockerImageName}", dockerImageName);
@@ -137,10 +154,10 @@ namespace TestContainers.Core.Containers
 
                     if (TestContainersConfiguration.Instance.EnvironmentSupportsReuse)
                     {
-                        createCommand.Labels[COPIED_FILES_HASH_LABEL] = Long.toHexString(hashCopiedFiles().getValue());
+                  //      createCommand.Labels[COPIED_FILES_HASH_LABEL] = Long.toHexString(hashCopiedFiles().getValue());
 
 
-                        var hash = hash(createCommand);
+                        var hash = Hash(createCommand);
 
                         var containerId = (await FindContainerForReuse(hash)) ?? null;
 
@@ -163,7 +180,7 @@ namespace TestContainers.Core.Containers
                             "" +
                                 "Reuse was requested but the environment does not support the reuse of containers\n" +
                                 "To enable reuse of containers, you must set 'testcontainers.reuse.enable=true' in a file located at {path}",
-                            Paths.get(System.getProperty("user.home"), ".testcontainers.properties")
+                            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), ".testcontainers.properties")
                         );
                         reusable = false;
                     }
@@ -185,7 +202,7 @@ namespace TestContainers.Core.Containers
                     _containerId = createResponse.ID;
 
                     // TODO use single "copy" invocation (and calculate a hash of the resulting tar archive)
-                    copyToFileContainerPathMap.forEach(this::copyFileToContainer);
+                    //copyToFileContainerPathMap.forEach(CopyFileToContainer);
                 }
 
                 //  ConnectToPortForwardingNetwork(createCommand.);
@@ -219,7 +236,7 @@ namespace TestContainers.Core.Containers
                 // Wait until the process within the container has become ready for use (e.g. listening on network, log message emitted, etc).
                 try
                 {
-                    await WaitUntilContainerStarted();
+                    await WaitUntilContainerStarted(cancellationToken);
                 }
                 catch (Exception e)
                 {
@@ -240,6 +257,7 @@ namespace TestContainers.Core.Containers
                     }
 
                     ContainerState state = inspectContainerResponse.State;
+
                     if (state.Dead)
                     {
                         throw new IllegalStateException("Container is dead");
@@ -251,6 +269,7 @@ namespace TestContainers.Core.Containers
                     }
 
                     var error = state.Error;
+
                     if (!string.IsNullOrWhiteSpace(error))
                     {
                         throw new IllegalStateException("Container crashed: " + error);
@@ -292,6 +311,50 @@ namespace TestContainers.Core.Containers
             }
         }
 
+        private string Hash(CreateContainerParameters createCommand)
+        {
+            var json = JsonConvert.SerializeObject(new { TestContainersVersion = "", Command = createCommand });
+            using (SHA1Managed sha1 = new SHA1Managed())
+            {
+                var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(json));
+                var sb = new StringBuilder(hash.Length * 2);
+
+                foreach (byte b in hash)
+                {
+                    // can be "x2" if you want lowercase
+                    sb.Append(b.ToString("X2"));
+                }
+
+                return sb.ToString();
+            }
+            
+        }
+
+        private Task<string> FindContainerForReuse(string hash)
+        {
+            throw new NotImplementedException();
+        }
+
+        private bool CanBeReused()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ApplyConfiguration(CreateContainerParameters createCommand)
+        {
+            createCommand.HostConfig = BuildHostConfig();
+
+            //createCommand.ExposedPorts = _ex
+
+            //createCommand.p
+
+        }
+
+        private HostConfig BuildHostConfig()
+        {
+            throw new NotImplementedException();
+        }
+
         private Task<string> GetLogs()
         {
             throw new NotImplementedException();
@@ -304,9 +367,9 @@ namespace TestContainers.Core.Containers
         }
         protected Task ContainerIsStarted(ContainerInspectResponse containerInfo, bool reused) => ContainerIsStarted(containerInfo);
 
-        private async Task WaitUntilContainerStarted()
+        protected virtual async Task WaitUntilContainerStarted(CancellationToken cancellationToken)
         {
-            await WaitStrategy?.WaitUntilReady(this);
+            await WaitStrategy?.WaitUntilReady(this, cancellationToken);
         }
 
 
@@ -329,6 +392,11 @@ namespace TestContainers.Core.Containers
         protected Task ContainerIsCreated(string containerId)
         {
             return Task.CompletedTask;
+        }
+
+        public Task Stop()
+        {
+            throw new NotImplementedException();
         }
 
 
@@ -500,28 +568,5 @@ namespace TestContainers.Core.Containers
         //{
         //    throw new NotImplementedException();
         //}
-    }
-
-    public static class DockerClientExtensions
-    {
-        public static string GetDockerHostIpAddress(this IDockerClient dockerClient)
-        {
-            var dockerHostUri = dockerClient.Configuration.EndpointBaseUri;
-
-            switch (dockerHostUri.Scheme)
-            {
-                case "http":
-                case "https":
-                case "tcp":
-                    return dockerHostUri.Host;
-                case "npipe": //will have to revisit this for LCOW/WCOW
-                              //case "unix":
-                              //    return File.Exists("/.dockerenv")
-                              //        ? ContainerInspectResponse.NetworkSettings.Gateway
-                              //        : "localhost";
-                default:
-                    return null;
-            }
-        }
     }
 }

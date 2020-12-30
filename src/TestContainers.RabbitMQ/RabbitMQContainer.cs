@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using RabbitMQ.Client;
@@ -29,16 +30,16 @@ namespace TestContainers.RabbitMQ
             _connectionFactory ?? (_connectionFactory = new ConnectionFactory
             {
                 HostName = Host,
-                Port = GetMappedPort(Port),
+      //         Port = GetMappedPort(Port),
                 VirtualHost = VirtualHost,
                 UserName = UserName,
                 Password = Password,
                 RequestedHeartbeat = TimeSpan.FromSeconds(DefaultRequestedHeartbeatInSec)
             });
 
-        protected override async Task WaitUntilContainerStarted()
+        protected override async Task WaitUntilContainerStarted(CancellationToken cancellationToken)
         {
-            await base.WaitUntilContainerStarted();
+            await base.WaitUntilContainerStarted(cancellationToken);
 
             var result = await Policy
                 .TimeoutAsync(TimeSpan.FromMinutes(2))

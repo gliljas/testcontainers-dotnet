@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet.Models;
 
-namespace TestContainers.Containers
+namespace TestContainers
 {
     public interface IContainerState
     {

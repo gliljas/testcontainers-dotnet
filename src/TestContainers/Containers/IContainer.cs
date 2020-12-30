@@ -2,133 +2,231 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Docker.DotNet;
 using JetBrains.Annotations;
 using TestContainers.Containers.Mounts;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Images;
+using TestContainers.Utility;
 
-namespace TestContainers.Containers
+namespace TestContainers
 {
     /// <summary>
     /// A docker container
     /// </summary>
     public interface IContainer : IContainerState
     {
-        /// <summary>
-        /// Gets the docker image used for this container
-        /// </summary>
-        [NotNull]
-        IImage DockerImage { get; }
+
+        void SetCommand(params string[] commandParts);
+
+        void AddEnv(string key, string value);
+
+        void AddFileSystemBind(string hostPath, string containerPath, AccessMode accessMode);
+
+        void AddFileSystemBind(string hostPath, string containerPath, AccessMode mode, SelinuxContext selinuxContext);
+
+        void AddExposedPort(int port);
+
+        void AddExposedPorts(params int[] ports);
+
+        IContainer WaitingFor(IWaitStrategy waitStrategy);
+
+        IContainer WithFileSystemBind(string hostPath, string containerPath);
+
+        IContainer WithFileSystemBind(string hostPath, string containerPath, AccessMode accessMode);
+
+        IContainer WithVolumesFrom(IContainer container, AccessMode accessMode);
+
+        IContainer WithExposedPorts(params int[] ports);
+        IContainer WithCopyFileToContainer(MountableFile mountableFile, string containerPath);
+
+        IContainer WithEnv(string key, string value);
+
+        IContainer WithEnv(string key, Func<string,string> value);
+
+        IContainer WithEnv(IDictionary<string,string> env);
+        IContainer WithLabel(string key, string value);
+        IContainer WithLabels(IDictionary<string, string> labels);
+
+        IContainer WithCommand(params string[] commandParts);
+
+        IContainer WithExtraHost(string hostname, string ipAddress);
+
+        IContainer WithNetworkMode(string networkMode);
+
+        IContainer WithNetwork(INetwork network);
+
+        IContainer WithNetworkAliases(params string[] aliases);
+
+        IContainer WithImagePullPolicy(IImagePullPolicy policy);
+
+        IContainer WithStartupTimeout(TimeSpan duration);
+
+        IContainer WithPrivilegedMode(bool mode);
+
+        IContainer WithMinimumRunningDuration(TimeSpan minimumRunningDuration);
+
+        IContainer WithStartupCheckStrategy(IStartupCheckStrategy strategy);
+
+        IContainer WithWorkingDirectory(string workingDirectory);
+
+        void SetDockerImageName(string dockerImageName);
+
+        string GetDockerImageName();
+
+        string GetTestHostIpAddress();
+
+        void FollowOutput(IConsumer<OutputFrame> consumer);
+
+        void FollowOutput(IConsumer<OutputFrame> consumer, params OutputFrame.OutputType[] types);
+
+        IContainer WithLogConsumer(IConsumer<OutputFrame> consumer);
+
+        IReadOnlyList<string> GetPortBindings();
+
+        IReadOnlyList<string> GetExtraHosts();
+
+        Task<string> GetImage();
+
+        IDictionary<string, string> GetEnvMap();
+
+        string[] GetCommandParts();
+
+        IReadOnlyList<IBind> GetBinds();
+
+        IDockerClient GetDockerClient();
+
+        void SetExposedPorts(List<int> exposedPorts);
+
+        void SetPortBindings(List<string> portBindings);
+
+        void SetExtraHosts(List<string> extraHosts);
+
+        void SetImage(Task<string> image);
+
+        void SetEnv(List<string> env);
+
+        void SetCommandParts(string[] commandParts);
+
+        void SetBinds(List<IBind> binds);
+
+        void SetWaitStrategy(IWaitStrategy waitStrategy);
 
         ///// <summary>
-        ///// Gets the container id after it has been created
+        ///// Gets the docker image used for this container
         ///// </summary>
-        //string ContainerId { get; }
+        //[NotNull]
+        //IImage DockerImage { get; }
 
-        /// <summary>
-        /// List of ports to be exposed on the container
-        /// These ports will be automatically mapped to a higher port upon container start
-        /// Use <see cref="GetMappedPort"/> to retrieve the automatically mapped port
-        /// </summary>
-        [NotNull]
-        IList<int> ExposedPorts { get; }
+        /////// <summary>
+        /////// Gets the container id after it has been created
+        /////// </summary>
+        ////string ContainerId { get; }
 
-        /// <summary>
-        /// Port bindings to create for the container. The port must also be exposed by Exposed ports.
-        /// Dictionary&lt;int ExposedPort, int PortBinding&gt;
-        /// </summary>
-        [NotNull]
-        IDictionary<int, int> PortBindings { get; }
+        ///// <summary>
+        ///// List of ports to be exposed on the container
+        ///// These ports will be automatically mapped to a higher port upon container start
+        ///// Use <see cref="GetMappedPort"/> to retrieve the automatically mapped port
+        ///// </summary>
+        //[NotNull]
+        //IList<int> ExposedPorts { get; }
 
-        /// <summary>
-        /// Environment variables to be injected into the container
-        /// Dictionary&lt;int key, int value&gt;
-        /// </summary>
-        [NotNull]
-        IDictionary<string, string> Env { get; }
+        ///// <summary>
+        ///// Port bindings to create for the container. The port must also be exposed by Exposed ports.
+        ///// Dictionary&lt;int ExposedPort, int PortBinding&gt;
+        ///// </summary>
+        //[NotNull]
+        //IDictionary<int, int> PortBindings { get; }
 
-        /// <summary>
-        /// Labels to be set on the container
-        /// Dictionary&lt;int key, int value&gt;
-        /// </summary>
-        [NotNull]
-        IDictionary<string, string> Labels { get; }
+        ///// <summary>
+        ///// Environment variables to be injected into the container
+        ///// Dictionary&lt;int key, int value&gt;
+        ///// </summary>
+        //[NotNull]
+        //IDictionary<string, string> Env { get; }
 
-        /// <summary>
-        /// List of path bindings between host and container
-        /// </summary>
-        [NotNull]
-        IList<IBind> BindMounts { get; }
+        ///// <summary>
+        ///// Labels to be set on the container
+        ///// Dictionary&lt;int key, int value&gt;
+        ///// </summary>
+        //[NotNull]
+        //IDictionary<string, string> Labels { get; }
 
-        /// <summary>
-        /// Sets the container to use privileged mode when this is set
-        /// </summary>
-        bool IsPrivileged { get; set; }
+        ///// <summary>
+        ///// List of path bindings between host and container
+        ///// </summary>
+        //[NotNull]
+        //IList<IBind> BindMounts { get; }
 
-        /// <summary>
-        /// Sets the working directory after the container started
-        /// </summary>
-        string WorkingDirectory { get; set; }
+        ///// <summary>
+        ///// Sets the container to use privileged mode when this is set
+        ///// </summary>
+        //bool IsPrivileged { get; set; }
 
-        /// <summary>
-        /// Command to run when the container starts
-        /// </summary>
-        [NotNull]
-        IList<string> Command { get; }
+        ///// <summary>
+        ///// Sets the working directory after the container started
+        ///// </summary>
+        //string WorkingDirectory { get; set; }
 
-        /// <summary>
-        /// Option to auto remove the container after use
-        /// </summary>
-        bool AutoRemove { get; set; }
+        ///// <summary>
+        ///// Command to run when the container starts
+        ///// </summary>
+        //[NotNull]
+        //IList<string> Command { get; }
 
-        /// <summary>
-        /// Strategy to use to wait for services in the container to successfully start
-        /// </summary>
-        IWaitStrategy WaitStrategy { get; set; }
+        ///// <summary>
+        ///// Option to auto remove the container after use
+        ///// </summary>
+        //bool AutoRemove { get; set; }
 
-        /// <summary>
-        /// Strategy to use to wait for the container to start
-        /// </summary>
-        IStartupStrategy StartupStrategy { get; set; }
+        ///// <summary>
+        ///// Strategy to use to wait for services in the container to successfully start
+        ///// </summary>
+        //IWaitStrategy WaitStrategy { get; set; }
 
-        /// <summary>
-        /// Starts the container
-        /// </summary>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>A task that completes when the container fully started</returns>
-        Task Start(CancellationToken ct = default);
+        ///// <summary>
+        ///// Strategy to use to wait for the container to start
+        ///// </summary>
+        //IStartupStrategy StartupStrategy { get; set; }
 
-        /// <summary>
-        /// Stops the container
-        /// </summary>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>A task that completes when the container fully stops</returns>
-        Task Stop(CancellationToken ct = default);
+        ///// <summary>
+        ///// Starts the container
+        ///// </summary>
+        ///// <param name="ct">Cancellation token</param>
+        ///// <returns>A task that completes when the container fully started</returns>
+        //Task Start(CancellationToken ct = default);
 
-        /// <summary>
-        /// Gets a network host address for this docker instance
-        /// </summary>
-        /// <returns>The network host for this docker instance</returns>
-        /// <exception cref="InvalidOperationException">when docker uses a transport that is not supported</exception>
-        string GetDockerHostIpAddress();
+        ///// <summary>
+        ///// Stops the container
+        ///// </summary>
+        ///// <param name="ct">Cancellation token</param>
+        ///// <returns>A task that completes when the container fully stops</returns>
+        //Task Stop(CancellationToken ct = default);
 
-        /// <summary>
-        /// Gets an mapped port from an exposed port
-        /// </summary>
-        /// <param name="exposedPort">Exposed port to map</param>
-        /// <returns>The mapped port</returns>
-        /// <exception cref="InvalidOperationException">when the container has yet to start</exception>
-        /// <exception cref="ArgumentException">when the port is not mapped</exception>
-        int GetMappedPort(int exposedPort);
+        ///// <summary>
+        ///// Gets a network host address for this docker instance
+        ///// </summary>
+        ///// <returns>The network host for this docker instance</returns>
+        ///// <exception cref="InvalidOperationException">when docker uses a transport that is not supported</exception>
+        //string GetDockerHostIpAddress();
 
-        /// <summary>
-        /// Executes a command against a running container
-        /// </summary>
-        /// <param name="command">The command and its parameters to run</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>Tuple containing the response of the command</returns>
-        /// <exception cref="InvalidOperationException">when the container has yet to start</exception>
-        Task<(string stdout, string stderr)> ExecuteCommandAsync(string[] command, CancellationToken ct = default);
+        ///// <summary>
+        ///// Gets an mapped port from an exposed port
+        ///// </summary>
+        ///// <param name="exposedPort">Exposed port to map</param>
+        ///// <returns>The mapped port</returns>
+        ///// <exception cref="InvalidOperationException">when the container has yet to start</exception>
+        ///// <exception cref="ArgumentException">when the port is not mapped</exception>
+        //int GetMappedPort(int exposedPort);
+
+        ///// <summary>
+        ///// Executes a command against a running container
+        ///// </summary>
+        ///// <param name="command">The command and its parameters to run</param>
+        ///// <param name="ct">Cancellation token</param>
+        ///// <returns>Tuple containing the response of the command</returns>
+        ///// <exception cref="InvalidOperationException">when the container has yet to start</exception>
+        //Task<(string stdout, string stderr)> ExecuteCommandAsync(string[] command, CancellationToken ct = default);
     }
 }

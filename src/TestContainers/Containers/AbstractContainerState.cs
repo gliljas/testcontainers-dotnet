@@ -38,27 +38,27 @@ namespace TestContainers.Containers
             //  DockerClientFactory.Instance.Client().Containers.ExtractArchiveToContainerAsync()
         }
 
-        public Task<IReadOnlyList<string>> GetBoundPortNumbers(CancellationToken cancellationToken)
+        public virtual Task<IReadOnlyList<string>> GetBoundPortNumbers(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetContainerIpAddress(CancellationToken cancellationToken)
+        public virtual Task<string> GetContainerIpAddress(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<ContainerInspectResponse> GetCurrentContainerInfo(CancellationToken cancellationToken)
+        public virtual Task<ContainerInspectResponse> GetCurrentContainerInfo(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken)
+        public virtual Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<int> GetFirstMappedPort(CancellationToken cancellationToken)
+        public virtual async Task<int> GetFirstMappedPort(CancellationToken cancellationToken)
         {
             var mappedPort = await (await GetExposedPorts(cancellationToken)).Take(1).Select(async port => await GetMappedPort(port, cancellationToken)).FirstOrDefault();
 
@@ -68,7 +68,7 @@ namespace TestContainers.Containers
 
         public virtual string Host => DockerClientFactory.Instance.Client().GetDockerHostIpAddress();
 
-        public Task<int> GetMappedPort(int originalPort, CancellationToken cancellationToken)
+        public virtual Task<int> GetMappedPort(int originalPort, CancellationToken cancellationToken = default)
         {
             //Preconditions.checkState(this.getContainerId() != null, "Mapped port can only be obtained after the container is started");
 
@@ -94,7 +94,7 @@ namespace TestContainers.Containers
 
         public Task<IReadOnlyList<string>> GetPortBindings(CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<string>>(GetContainerInfo().HostConfig.PortBindings.SelectMany(x => x.Value).Select(x => $"{x.HostPort}:z").ToList());
+            return Task.FromResult<IReadOnlyList<string>>(ContainerInfo.HostConfig.PortBindings.SelectMany(x => x.Value).Select(x => $"{x.HostPort}:z").ToList());
         }
 
         public async Task<bool> IsCreated(CancellationToken cancellationToken)
@@ -109,7 +109,7 @@ namespace TestContainers.Containers
                 var state = (await GetCurrentContainerInfo(cancellationToken)).State;
                 return "created".Equals(state.Status) || state.Running;
             }
-            catch (DockerApiException e)
+            catch (DockerApiException)
             {
                 return false;
             }
@@ -150,7 +150,7 @@ namespace TestContainers.Containers
             {
                 return (await GetCurrentContainerInfo(cancellationToken)).State.Running;
             }
-            catch (DockerApiException e)
+            catch (DockerApiException)
             {
                 return false;
             }
