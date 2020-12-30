@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Docker.DotNet.Models;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Core.Containers;
 
@@ -34,5 +35,7 @@ namespace TestContainers.Containers
         public override string Host => _proxyContainer.Host;
 
         public override string ContainerId => _container.ContainerId;
+
+        public override ContainerInspectResponse ContainerInfo => throw new NotImplementedException();
     }
 }

@@ -229,4 +229,9 @@ namespace TestContainers
         ///// <exception cref="InvalidOperationException">when the container has yet to start</exception>
         //Task<(string stdout, string stderr)> ExecuteCommandAsync(string[] command, CancellationToken ct = default);
     }
+
+    //public abstract class AbstractContainer : IContainer
+    //{
+
+    //}
 }
