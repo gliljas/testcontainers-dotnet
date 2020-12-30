@@ -39,7 +39,7 @@ namespace TestContainers
         IContainer WithVolumesFrom(IContainer container, AccessMode accessMode);
 
         IContainer WithExposedPorts(params int[] ports);
-        IContainer WithCopyFileToContainer(MountableFile mountableFile, string containerPath);
+        //IContainer WithCopyFileToContainer(MountableFile mountableFile, string containerPath);
 
         IContainer WithEnv(string key, string value);
 
