@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace TestContainers.Images
 {
-    public class RemoteDockerImage 
+    public class RemoteDockerImage
     {
         private readonly TimeSpan PULL_RETRY_TIME_LIMIT = TimeSpan.FromMinutes(2);
         private DockerImageName _dockerImageName;
@@ -15,10 +15,15 @@ namespace TestContainers.Images
         private IImagePullPolicy _imagePullPolicy;
         private IDockerClient _dockerClient = DockerClientFactory.LazyClient;
         private ILogger _logger;
-        
-        public RemoteDockerImage(DockerImageName dockerImageName) 
+
+        public RemoteDockerImage(DockerImageName dockerImageName)
         {
             _dockerImageNameTask = Task.FromResult(dockerImageName);
+        }
+
+        public RemoteDockerImage(Task<string> dockerImageNameTask)
+        {
+            _dockerImageNameTask = dockerImageNameTask.ContinueWith(x => DockerImageName.Parse(x.Result), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         public RemoteDockerImage(string dockerImageName) : this(DockerImageName.Parse(dockerImageName))
@@ -48,12 +53,12 @@ namespace TestContainers.Images
                     {
                         //
                         await _dockerClient.Images.CreateImageAsync(
-                                new ImagesCreateParameters {FromImage = imageName.UnversionedPart,Tag = imageName.VersionPart },
+                                new ImagesCreateParameters { FromImage = imageName.UnversionedPart, Tag = imageName.VersionPart },
                                 null,
                                 null,
                                 cancellationToken
                             );
-                            
+
                         LocalImagesCache.Instance.RefreshCache(imageName);
 
                         return imageName.AsCanonicalNameString();
@@ -69,7 +74,7 @@ namespace TestContainers.Images
 
                 _logger.LogError(lastFailure, "Failed to pull image: {imageName}. Please check output of `docker pull {imageName}`", imageName, imageName);
 
-                    throw new ContainerFetchException("Failed to pull image: " + imageName, lastFailure);
+                throw new ContainerFetchException("Failed to pull image: " + imageName, lastFailure);
             }
             catch (Exception e)//(DockerClientException e)
             {
@@ -83,6 +88,32 @@ namespace TestContainers.Images
 
             // Allow the image name to be substituted
             return specifiedImageName;//ImageNameSubstitutor.instance().apply(specifiedImageName);
+        }
+
+        private string ImageNameToString()
+        {
+            if (!_dockerImageNameTask.IsCompleted)
+            {
+                return "<resolving>";
+            }
+
+            try
+            {
+                return _dockerImageNameTask.Result.AsCanonicalNameString();
+            }
+            catch (AggregateException e)
+            { //InterruptedException | ExecutionException 
+                return e.Flatten().Message;
+            }
+            catch (Exception e)
+            { //InterruptedException | ExecutionException 
+                return e.Message;
+            }
+        }
+
+        public override string ToString()
+        {
+            return "imageName=" + ImageNameToString();
         }
     }
 }

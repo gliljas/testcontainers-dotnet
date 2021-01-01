@@ -10,6 +10,8 @@ namespace TestContainers
     {
         static volatile DockerClientFactory instance;
         static object syncRoot = new Object();
+        internal IDockerClient _dockerClient;
+        internal object _cachedClientFailure;
         public static readonly string TESTCONTAINERS_SESSION_ID_LABEL;
         public static readonly string TESTCONTAINERS_LABEL;
         public static readonly string SESSION_ID = Guid.NewGuid().ToString("N");

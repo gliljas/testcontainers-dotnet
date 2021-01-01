@@ -21,6 +21,9 @@ using TestContainers.Lifecycle;
 namespace TestContainers.Core.Containers
 {
     public class GenericContainer : AbstractWaitStrategyTarget, IStartable
+        #if !NETSTANDARD2_0
+        , IAsyncDisposable
+#endif
     {
         private IStartupCheckStrategy _startupCheckStrategy = new IsRunningStartupCheckStrategy();
         private ILogger _logger = null;
@@ -395,6 +398,11 @@ namespace TestContainers.Core.Containers
         }
 
         public Task Stop()
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask DisposeAsync()
         {
             throw new NotImplementedException();
         }
