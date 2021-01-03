@@ -1,4 +1,6 @@
-﻿using Docker.DotNet;
+using System;
+using Docker.DotNet;
+using TestContainers.Containers.WaitStrategies;
 
 namespace TestContainers.Core.Containers
 {
@@ -23,5 +25,7 @@ namespace TestContainers.Core.Containers
                     return null;
             }
         }
+
+        
     }
 }

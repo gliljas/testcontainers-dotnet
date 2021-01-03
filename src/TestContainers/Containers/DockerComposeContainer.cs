@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -50,6 +51,12 @@ namespace TestContainers.Containers
         private static readonly SemaphoreSlim MUTEX = new SemaphoreSlim(1, 1);
 
         private List<string> _services = new List<string>();
+
+        /**
+     * Properties that should be passed through to all Compose and ambassador containers (not
+     * necessarily to containers that are spawned by Compose itself)
+     */
+        private Dictionary<string, string> _env = new Dictionary<string, string>();
 
         public DockerComposeContainer(params FileInfo[] composeFiles) : this(composeFiles.ToList())
         {
@@ -271,12 +278,12 @@ namespace TestContainers.Containers
             }
             else
             {
-                dockerCompose = new ContainerisedDockerCompose(composeFiles, project);
+                dockerCompose = new ContainerisedDockerCompose(_composeFiles, _project);
             }
 
             await dockerCompose
                 .WithCommand(cmd)
-                .WithEnv(env)
+                .WithEnv(_env)
                 .Invoke();
         }
 
@@ -291,6 +298,11 @@ namespace TestContainers.Containers
         {
             throw new NotImplementedException();
         }
+
+        public Task Stop()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     internal class ContainerisedDockerCompose : GenericContainer, IDockerCompose
@@ -298,7 +310,7 @@ namespace TestContainers.Containers
         public static readonly char UNIX_PATH_SEPERATOR = ':';
         public static readonly DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.Parse("docker/compose:1.24.1");
 
-        public ContainerisedDockerCompose(List<FileInfo> composeFiles, string identifier) : base(DEFAULT_IMAGE_NAME)
+        public ContainerisedDockerCompose(IEnumerable<FileInfo> composeFiles, string identifier) : base(DEFAULT_IMAGE_NAME)
         {
 
             AddEnv(ENV_PROJECT_NAME, identifier);
@@ -332,9 +344,9 @@ namespace TestContainers.Containers
         }
 
 
-        public override async Task Invoke()
+        public async Task Invoke()
         {
-            await _base.Start();
+            await base.Start();
 
             await FollowOutput(new LoggerConsumer(Logger));
 
@@ -363,6 +375,7 @@ namespace TestContainers.Containers
             }
         }
 
+        
         private string ConvertToUnixFilesystemPath(string path)
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -370,128 +383,4 @@ namespace TestContainers.Containers
                 : path;
         }
     }
-}
-
-internal interface IDockerCompose
-{
-    IDockerCompose WithCommand(string cmd);
-
-    IDockerCompose WithEnv(Dictionary<string, string> env);
-
-    Task Invoke();
-}
-
-internal class LocalDockerCompose : IDockerCompose
-{
-    string ENV_PROJECT_NAME = "COMPOSE_PROJECT_NAME";
-    string ENV_COMPOSE_FILE = "COMPOSE_FILE";
-
-    /**
-     * Executable name for Docker Compose.
-     */
-    private static readonly string COMPOSE_EXECUTABLE = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "docker-compose.exe" : "docker-compose";
-
-    private readonly IReadOnlyList<FileInfo> _composeFiles;
-    private readonly string _identifier;
-    private string _cmd = "";
-    private Dictionary<string, string> _env = new Dictionary<string, string>();
-
-    public LocalDockerCompose(IReadOnlyList<FileInfo> composeFiles, String identifier)
-    {
-        _composeFiles = composeFiles;
-        _identifier = identifier;
-    }
-
-    public IDockerCompose WithCommand(string cmd)
-    {
-        _cmd = cmd;
-        return this;
-    }
-
-
-    public IDockerCompose WithEnv(Dictionary<string, string> env)
-    {
-        _env = env;
-        return this;
-    }
-
-    internal static bool ExecutableExists()
-    {
-        return CommandLine.ExecutableExists(COMPOSE_EXECUTABLE);
-    }
-
-    public async Task Invoke()
-    {
-        // bail out early
-        if (!ExecutableExists())
-        {
-            throw new ContainerLaunchException("Local Docker Compose not found. Is " + COMPOSE_EXECUTABLE + " on the PATH?");
-        }
-
-        var environment = _env.ToDictionary(x => x.Key, x => x.Value);
-        environment[ENV_PROJECT_NAME] = _identifier;
-
-        var dockerHost = Environment.GetEnvironmentVariable("DOCKER_HOST");
-        if (dockerHost == null)
-        {
-            TransportConfig transportConfig = DockerClientFactory.Instance.GetTransportConfig();
-            SSLConfig sslConfig = transportConfig.getSslConfig();
-            if (sslConfig != null)
-            {
-                if (sslConfig instanceof LocalDirectorySSLConfig) {
-                    environment.put("DOCKER_CERT_PATH", ((LocalDirectorySSLConfig) sslConfig).getDockerCertPath());
-                    environment.put("DOCKER_TLS_VERIFY", "true");
-                } else
-                {
-                    logger().warn("Couldn't set DOCKER_CERT_PATH. `sslConfig` is present but it's not LocalDirectorySSLConfig.");
-                }
-            }
-            dockerHost = transportConfig.getDockerHost().toString();
-        }
-        environment["DOCKER_HOST"] = dockerHost;
-
-        var absoluteDockerComposeFilePaths = _composeFiles
-            .Select(x => x.FullName);
-
-        var composeFileEnvVariableValue = string.Join(Path.PathSeparator.ToString(), absoluteDockerComposeFilePaths);
-        Logger.LogDebug("Set env COMPOSE_FILE={composeFileEnvVariableValue}", composeFileEnvVariableValue);
-
-        var pwd = _composeFiles[0].Directory.FullName;
-        environment[ENV_COMPOSE_FILE] = composeFileEnvVariableValue;
-
-        Logger.LogInformation("Local Docker Compose is running command: {cmd}", _cmd);
-
-        var command = (COMPOSE_EXECUTABLE + " " + _cmd).Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-        try
-        {
-            new ProcessExecutor().command(command)
-                .redirectOutput(Slf4jStream.of(logger()).asInfo())
-                .redirectError(Slf4jStream.of(logger()).asInfo()) // docker-compose will log pull information to stderr
-                .environment(environment)
-                .directory(pwd)
-                .exitValueNormal()
-                .executeNoTimeout();
-
-            Logger.LogInformation("Docker Compose has finished running");
-
-        }
-        catch (InvalidExitValueException e)
-        {
-            throw new ContainerLaunchException("Local Docker Compose exited abnormally with code " +
-                                               e.getExitValue() + " whilst running command: " + cmd);
-
-        }
-        catch (Exception e)
-        {
-            throw new ContainerLaunchException("Error running local Docker Compose command: " + cmd, e);
-        }
-    }
-
-    /**
-     * @return a logger
-     */
-    private ILogger Logger => DockerLoggerFactory.GetLogger(COMPOSE_EXECUTABLE);
-
-}
 }

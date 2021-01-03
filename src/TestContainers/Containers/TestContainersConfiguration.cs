@@ -1,17 +1,19 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace TestContainers.Core.Containers
 {
     internal class TestContainersConfiguration
     {
-        private readonly Dictionary<string, string> environment;
+        private readonly Dictionary<string, string> _environment;
         public static TestContainersConfiguration Instance { get; internal set; }
         public bool EnvironmentSupportsReuse { get; internal set; }
         public string ImageSubstitutorClassName { get; internal set; }
         public string DockerClientStrategyClassName { get; internal set; }
         public string TransportType => GetEnvVarOrProperty("transport.type", "okhttp");
 
+        [ContractAnnotation("_, !null -> !null")]
         public string GetEnvVarOrProperty(string propertyName, string defaultValue) => GetConfigurable(propertyName, defaultValue, _userProperties, _classpathProperties);
 
         private string GetConfigurable(string propertyName, string defaultValue, Properties...propertiesSources)
@@ -22,12 +24,12 @@ namespace TestContainers.Core.Containers
                 envVarName = "TESTCONTAINERS_" + envVarName;
             }
 
-            if (environment.containsKey(envVarName))
+            if (_environment.TryGetValue(envVarName, out var value))
             {
-                return environment.get(envVarName);
+                return value;
             }
 
-            for (final Properties properties : propertiesSources)
+            for (var properties in propertiesSources)
             {
                 if (properties.get(propertyName) != null)
                 {
