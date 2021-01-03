@@ -6,9 +6,6 @@ namespace TestContainers.Images
 {
     public abstract class AbstractImagePullPolicy : IImagePullPolicy
     {
-        public bool ShouldPull(DockerImageName dockerImageName)
-        {
-            throw new NotImplementedException();
-        }
+        public abstract bool ShouldPull(DockerImageName dockerImageName);
     }
 }

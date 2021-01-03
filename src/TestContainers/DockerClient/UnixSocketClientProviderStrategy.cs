@@ -6,8 +6,11 @@ namespace TestContainers
 {
     public class UnixSocketClientProviderStrategy : DockerClientProviderStrategy
     {
+        protected static readonly string DOCKER_SOCK_PATH = "/var/run/docker.sock";
+        private static readonly string SOCKET_LOCATION = "unix://" + DOCKER_SOCK_PATH;
+        private static readonly int SOCKET_FILE_MODE_MASK = 0xc000;
         protected override DockerClientConfiguration Config { get; } =
-            new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock"));
+            new DockerClientConfiguration(new Uri(SOCKET_LOCATION));
 
         protected override bool IsApplicable() => EnvironmentHelper.IsOSX() || EnvironmentHelper.IsLinux();
 

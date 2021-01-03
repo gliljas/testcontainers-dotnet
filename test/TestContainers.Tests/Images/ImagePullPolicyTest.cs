@@ -2,20 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Docker.DotNet;
+using Docker.DotNet.Models;
+using NSubstitute;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Core.Containers;
 using TestContainers.Images;
 using Xunit;
+using Xunit.Sdk;
 
 namespace TestContainers.Tests.Images
 {
-    public class ImagePullPolicyTest : IAsyncLifetime
+    public class ImagePullPolicyTest : IAsyncLifetime, IClassFixture<DockerRegistryFixture>
     {
-        
+        private readonly DockerRegistryFixture _dockerRegistryFixture;
+
+        public ImagePullPolicyTest(DockerRegistryFixture dockerRegistryFixture)
+        {
+            _dockerRegistryFixture = dockerRegistryFixture;
+        }
         [Fact]
         public async Task PullsByDefault()
         {
-            await using (GenericContainer container = new GenericContainer(imageName)
+            await using (GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
                 .WithStartupCheckStrategy(new OneShotStartupCheckStrategy()))
             {
                 await container.Start();
@@ -26,8 +35,8 @@ namespace TestContainers.Tests.Images
         public async Task ShouldAlwaysPull()
         {
 
-            await using (GenericContainer container = new GenericContainer(imageName)
-                .withStartupCheckStrategy(new OneShotStartupCheckStrategy()))
+            await using (GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                .WithStartupCheckStrategy(new OneShotStartupCheckStrategy()))
             {
 
                 await container.Start();
@@ -35,129 +44,128 @@ namespace TestContainers.Tests.Images
                 await RemoveImage();
             }
             await using (
-                GenericContainer  container = new GenericContainer(imageName)
-                    .withStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                    .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
 
-            ) {
-                expectToFailWithNotFoundException(container);
+            )
+            {
+                await ExpectToFailWithNotFoundException(container);
             }
 
             await using (
                 // built_in_image_pull_policy {
-                GenericContainer  container = new GenericContainer(imageName)
+                GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
                     .WithImagePullPolicy(PullPolicy.AlwaysPull)
-                    // }
-            ) {
+            // }
+            )
+            {
                 container.WithStartupCheckStrategy(new OneShotStartupCheckStrategy());
                 await container.Start();
             }
-            }
-
-    [Fact]
-            public void ShouldSupportCustomPolicies()
-            {
-                await using (
-                    // custom_image_pull_policy {
-                    GenericContainer container = new GenericContainer(imageName)
-                        .WithImagePullPolicy(new AbstractImagePullPolicy() {
-                    @Override
-                                protected boolean shouldPullCached(DockerImageName imageName, ImageData localImageData)
-                {
-                    return System.getenv("ALWAYS_PULL_IMAGE") != null;
-                }
-                })
-            // }
-        ) {
-                container.withStartupCheckStrategy(new OneShotStartupCheckStrategy());
-                container.start();
-            }
-            }
+        }
 
         [Fact]
-            public void shouldCheckPolicy()
+        public async Task ShouldSupportCustomPolicies()
+        {
+            await using (
+                // custom_image_pull_policy {
+                GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                    .WithImagePullPolicy(new EnvironmentBasedImagePullPolicy())
+    // }
+    )
             {
-                ImagePullPolicy policy = Mockito.spy(new AbstractImagePullPolicy() {
-            @Override
-            protected boolean shouldPullCached(DockerImageName imageName, ImageData localImageData)
-                {
-                    return false;
-                }
-            });
-            try (
-                GenericContainer <?> container = new GenericContainer<>(imageName)
-                    .withImagePullPolicy(policy)
-                    .withStartupCheckStrategy(new OneShotStartupCheckStrategy())
-
-
-            ) {
-                container.start();
-
-                Mockito.verify(policy).shouldPull(any());
+                container.WithStartupCheckStrategy(new OneShotStartupCheckStrategy());
+                await container.Start();
             }
-            }
+        }
 
-[Fact]
-            public void shouldNotForcePulling()
+        [Fact]
+        public async Task ShouldCheckPolicy()
+        {
+            var policy = Substitute.For<IImagePullPolicy>();
+            policy.ShouldPull(Arg.Any<DockerImageName>()).Returns(false);
+            //policy.ShouldPullCached(Arg.Any<DockerImageName>(), Arg.Any<ImageData>()).Returns(false);
+
+            await using (
+                var container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                    .WithImagePullPolicy(policy)
+                    .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+
+
+            )
             {
-                try (
-                    GenericContainer <?> container = new GenericContainer<>(imageName)
-                        .withImagePullPolicy(__-> false)
-                        .withStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                await container.Start();
 
-
-
-                ) {
-                    expectToFailWithNotFoundException(container);
-                }
-                }
-
-    private void expectToFailWithNotFoundException(GenericContainer<?> container)
+                policy.Received().ShouldPull(Arg.Any<DockerImageName>());
+            }
+        }
+        private class EnvironmentBasedImagePullPolicy : AbstractImagePullPolicy
+        {
+            public override bool ShouldPull(DockerImageName dockerImageName)
+            {
                 {
-                    try
+                    return Environment.GetEnvironmentVariable("ALWAYS_PULL_IMAGE") != null;
+
+                }
+            }
+
+        }
+
+        [Fact]
+        public async Task ShouldNotForcePulling()
+        {
+            await using (
+                var container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                    .WithImagePullPolicy(_ => false)
+                    .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+
+
+
+
+            )
+            {
+                await ExpectToFailWithNotFoundException(container);
+            }
+        }
+
+        private async Task ExpectToFailWithNotFoundException(GenericContainer container)
+        {
+            try
+            {
+                await container.Start();
+                throw new XunitException("Should fail");
+            }
+            catch (ContainerLaunchException e)
+            {
+                Exception t = e;
+                while (t.InnerException != null)
+                {
+                    if (t.InnerException is DockerImageNotFoundException)
                     {
-                        container.start();
-                        fail("Should fail");
+                        //VisibleAssertions.pass("Caused by NotFoundException");
+                        return;
                     }
-                    catch (ContainerLaunchException e)
-                    {
-                        Throwable throwable = e;
-                        while (throwable.getCause() != null)
-                        {
-                            throwable = throwable.getCause();
-                            if (throwable.getCause() instanceof NotFoundException) {
-                VisibleAssertions.pass("Caused by NotFoundException");
-                return;
+                    t = t.InnerException;
+                }
             }
         }
 
         public async Task InitializeAsync()
         {
             // Clean up local cache
-            await RemoveImage();
+            await _dockerRegistryFixture.RemoveImage();
 
-            LocalImagesCache.Instance.Cache.Remove(imageName);
+            LocalImagesCache.Instance.Cache.Remove(_dockerRegistryFixture.ImageName);
         }
 
-        public Task DisposeAsync()
+        public async Task DisposeAsync()
         {
-            throw new NotImplementedException();
+            await _dockerRegistryFixture.RemoveImage();
         }
 
-        
 
 
-    private static async Task RemoveImage()
-    {
-        try
-        {
-            DockerClientFactory.Instance.Client()
-                .Images.DeleteImageAsync(imageName.AsCanonicalNameString())
-                .withForce(true)
-                .exec();
-        }
-        catch (NotFoundException ignored)
-        {
-        }
+
+       
     }
-}
 }

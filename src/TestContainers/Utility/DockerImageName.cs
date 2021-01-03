@@ -30,6 +30,11 @@ namespace TestContainers.Images
 
         public static DockerImageName Parse(string fullImageName) => new DockerImageName(fullImageName);
 
+        public DockerImageName WithTag(string tag)
+        {
+            throw new NotImplementedException();
+        }
+
         private DockerImageName(string fullImageName)
         {
             _rawName = fullImageName;

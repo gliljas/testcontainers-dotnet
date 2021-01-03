@@ -434,7 +434,7 @@ internal class LocalDockerCompose : IDockerCompose
         var dockerHost = Environment.GetEnvironmentVariable("DOCKER_HOST");
         if (dockerHost == null)
         {
-            TransportConfig transportConfig = DockerClientFactory.instance().getTransportConfig();
+            TransportConfig transportConfig = DockerClientFactory.Instance.GetTransportConfig();
             SSLConfig sslConfig = transportConfig.getSslConfig();
             if (sslConfig != null)
             {
@@ -448,7 +448,7 @@ internal class LocalDockerCompose : IDockerCompose
             }
             dockerHost = transportConfig.getDockerHost().toString();
         }
-        environment["DOCKER_HOST"] dockerHost);
+        environment["DOCKER_HOST"] = dockerHost;
 
         var absoluteDockerComposeFilePaths = _composeFiles
             .Select(x => x.FullName);
