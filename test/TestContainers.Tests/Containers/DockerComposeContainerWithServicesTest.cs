@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TestContainers.Containers;
+using TestContainers.Core.Containers;
 using Xunit;
 
 namespace TestContainers.Tests.Containers
@@ -16,8 +19,9 @@ namespace TestContainers.Tests.Containers
         public async Task TestDesiredSubsetOfServicesAreStarted()
         {
             await using (
-                var compose = new DockerComposeContainer(SIMPLE_COMPOSE_FILE)
+                var compose = new DockerComposeContainerBuilder(SIMPLE_COMPOSE_FILE)
                     .WithServices("redis")
+                    .Build()
 
             )
             {
@@ -31,8 +35,9 @@ namespace TestContainers.Tests.Containers
         public async Task TestDesiredSubsetOfScaledServicesAreStarted()
         {
             await using (
-                var compose = new DockerComposeContainer(SIMPLE_COMPOSE_FILE)
+                var compose = new DockerComposeContainerBuilder(SIMPLE_COMPOSE_FILE)
                     .WithScaledService("redis", 2)
+                    .Build()
 
             )
             {
@@ -43,17 +48,18 @@ namespace TestContainers.Tests.Containers
         }
 
         [Fact]
-        public void TestDesiredSubsetOfSpecifiedAndScaledServicesAreStarted()
+        public async Task TestDesiredSubsetOfSpecifiedAndScaledServicesAreStarted()
         {
             await using (
-                var compose = new DockerComposeContainer(SIMPLE_COMPOSE_FILE)
+                var compose = new DockerComposeContainerBuilder(SIMPLE_COMPOSE_FILE)
                     .WithServices("redis")
                     .WithScaledService("redis", 2)
+                    .Build()
 
 
             )
             {
-                compose.start();
+                await compose.Start();
 
                 VerifyStartedContainers(compose, "redis_1", "redis_2");
             }
@@ -63,9 +69,10 @@ namespace TestContainers.Tests.Containers
         public async Task TestDesiredSubsetOfSpecifiedOrScaledServicesAreStarted()
         {
             await using (
-                var compose = new DockerComposeContainer(SIMPLE_COMPOSE_FILE)
+                var compose = new DockerComposeContainerBuilder(SIMPLE_COMPOSE_FILE)
                     .WithServices("other")
                     .WithScaledService("redis", 2)
+                    .Build()
 
 
 
@@ -78,10 +85,10 @@ namespace TestContainers.Tests.Containers
         }
 
         [Fact]
-        public void TestAllServicesAreStartedIfNotSpecified()
+        public async Task TestAllServicesAreStartedIfNotSpecified()
         {
             await using (
-                var compose = new DockerComposeContainer(SIMPLE_COMPOSE_FILE)
+                var compose = new DockerComposeContainerBuilder(SIMPLE_COMPOSE_FILE).Build()
 
 
 
@@ -98,7 +105,7 @@ namespace TestContainers.Tests.Containers
         public async Task TestScaleInComposeFileIsRespected()
         {
             await using (
-                var compose = new DockerComposeContainer(COMPOSE_FILE_WITH_INLINE_SCALE)
+                var compose = new DockerComposeContainerBuilder(COMPOSE_FILE_WITH_INLINE_SCALE).Build()//()
 
 
 
@@ -109,13 +116,13 @@ namespace TestContainers.Tests.Containers
                 await compose.Start();
 
                 // the compose file includes `scale: 3` for the redis container
-                VerifyStartedContainers(compose, "redis_1", "redis_2", "redis_3");
+                await VerifyStartedContainers(compose, "redis_1", "redis_2", "redis_3");
             }
         }
 
-        private void VerifyStartedContainers(DockerComposeContainer compose, params string[] names)
+        private async Task VerifyStartedContainers(DockerComposeContainer compose, params string[] names)
         {
-            var containerNames = compose.ListChildContainers()
+            var containerNames = (await compose.ListChildContainers())
                 .SelectMany(container => container.Names)
                 .ToList();
 

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Docker.DotNet;
+using Docker.DotNet.Models;
 using TestContainers.Containers;
+using TestContainers.Core.Containers;
 using Xunit;
 
 namespace TestContainers.Tests
@@ -18,8 +20,8 @@ namespace TestContainers.Tests
             {
                 //remove tiny image, so it will be pulled during next command run
                 dockFactory.Client()
-                        .removeImageCmd(TINY_IMAGE.asCanonicalNameString())
-                        .withForce(true).exec();
+                        .Images
+                        .DeleteImageAsync(TestImages.TINY_IMAGE.AsCanonicalNameString(), new ImageDeleteParameters { Force=true});
             }
             catch (NotFoundException ignored)
             {
@@ -57,32 +59,40 @@ namespace TestContainers.Tests
         [Fact]
         public void FailedChecksFailFast()
         {
-            Mockito.doReturn(false).when(TestcontainersConfiguration.getInstance).isDisableChecks();
-
-            // Make sure that Ryuk is started
-            Assert.NotNull(DockerClientFactory.Instance.Client());
-
-            DockerClientFactory instance = new DockerClientFactory();
-            IDockerClient dockerClient = instance._dockerClient;
-            Assert.NotNull(instance._cachedClientFailure);
+            var configInstance = TestContainersConfiguration.Instance;
             try
             {
-                // Remove cached client to force the initialization logic
-                instance._dockerClient = null;
+            //    Mockito.doReturn(false).when(TestContainersConfiguration.Instance).isDisableChecks();
 
-                // Ryuk should fail to start twice due to the name conflict (equal to the session id)
-                Assert.Throws<DockerApiException>(() => instance.Client());
+                // Make sure that Ryuk is started
+                Assert.NotNull(DockerClientFactory.Instance.Client());
 
-                var failure = new IllegalStateException("Boom!");
-                instance._cachedClientFailure = failure;
-                // Fail fast
-                var ex = Assert.Throws<Exception>(() => instance.Client());
-                Assert.Equal(failure, ex);
+                DockerClientFactory instance = new DockerClientFactory();
+                IDockerClient dockerClient = instance._dockerClient;
+                Assert.NotNull(instance._cachedClientFailure);
+                try
+                {
+                    // Remove cached client to force the initialization logic
+                    instance._dockerClient = null;
+
+                    // Ryuk should fail to start twice due to the name conflict (equal to the session id)
+                    Assert.Throws<DockerApiException>(() => instance.Client());
+
+                    var failure = new IllegalStateException("Boom!");
+                    instance._cachedClientFailure = failure;
+                    // Fail fast
+                    var ex = Assert.Throws<Exception>(() => instance.Client());
+                    Assert.Equal(failure, ex);
+                }
+                finally
+                {
+                    instance._dockerClient = dockerClient;
+                    instance._cachedClientFailure = null;
+                }
             }
             finally
             {
-                instance._dockerClient = dockerClient;
-                instance._cachedClientFailure = null;
+                TestContainersConfiguration.SetInstance(configInstance);
             }
         }
     }

@@ -22,7 +22,7 @@ using TestContainers.Utility;
 
 namespace TestContainers.Containers
 {
-    public class DockerComposeContainer : IStartable
+    public class DockerComposeContainer : IContainer
     {
         private ILogger _logger;
         /**
@@ -84,7 +84,7 @@ namespace TestContainers.Containers
             _dockerClient = DockerClientFactory.Instance.Client();
         }
 
-        public async Task Start(CancellationToken cancellationToken)
+        public async Task Start(CancellationToken cancellationToken = default)
         {
             await MUTEX.WaitAsync(cancellationToken);
             try
@@ -307,6 +307,9 @@ namespace TestContainers.Containers
 
     internal class ContainerisedDockerCompose : GenericContainer, IDockerCompose
     {
+        string ENV_PROJECT_NAME = "COMPOSE_PROJECT_NAME";
+        string ENV_COMPOSE_FILE = "COMPOSE_FILE";
+
         public static readonly char UNIX_PATH_SEPERATOR = ':';
         public static readonly DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.Parse("docker/compose:1.24.1");
 
@@ -343,17 +346,36 @@ namespace TestContainers.Containers
             SetWorkingDirectory(containerPwd);
         }
 
-
-        public async Task Invoke()
+        private void AddFileSystemBind(object p, string v, object rEAD_WRITE)
         {
-            await base.Start();
+            throw new NotImplementedException();
+        }
+
+        private void SetWorkingDirectory(string containerPwd)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void SetStartupCheckStrategy(IndefiniteWaitOneShotStartupCheckStrategy indefiniteWaitOneShotStartupCheckStrategy)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void AddEnv(object eNV_PROJECT_NAME, string identifier)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task Invoke(CancellationToken cancellationToken)
+        {
+            await base.Start(cancellationToken);
 
             await FollowOutput(new LoggerConsumer(Logger));
 
             // wait for the compose container to stop, which should only happen after it has spawned all the service containers
             Logger.LogInformation("Docker Compose container is running for command: {command}", string.Join(" ", GetCommandParts()));
 
-            while (await IsRunning())
+            while (await IsRunning(cancellationToken))
             {
                 Logger.LogTrace("Compose container is still running");
                 //Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);

@@ -21,8 +21,11 @@ using TestContainers.Utility;
 
 namespace TestContainers.Core.Containers
 {
-    public class GenericContainer : AbstractWaitStrategyTarget, IStartable
-        #if !NETSTANDARD2_0
+    public interface IGenericContainer
+    {
+    }
+    public class GenericContainer : AbstractWaitStrategyTarget, IContainer, IContainerState, IStartable
+#if !NETSTANDARD2_0
         , IAsyncDisposable
 #endif
     {
@@ -112,7 +115,7 @@ namespace TestContainers.Core.Containers
                 await Policy
                     .Handle<Exception>()//ex => !(ex is OperationCancelledException)
                     .OrResult<bool>(x => x == false)
-                    .Retry(startupAttempts-1)
+                    .Retry(startupAttempts - 1)
                     .ExecuteAsync(async (token) =>
                     {
                         _logger.LogDebug("Trying to start container: {imageName} (attempt {attempt}/{startupAttempts})", ImageName, Interlocked.Increment(ref attempt), startupAttempts);
@@ -158,7 +161,7 @@ namespace TestContainers.Core.Containers
 
                     if (TestContainersConfiguration.Instance.EnvironmentSupportsReuse)
                     {
-                  //      createCommand.Labels[COPIED_FILES_HASH_LABEL] = Long.toHexString(hashCopiedFiles().getValue());
+                        //      createCommand.Labels[COPIED_FILES_HASH_LABEL] = Long.toHexString(hashCopiedFiles().getValue());
 
 
                         var hash = Hash(createCommand);
@@ -331,7 +334,7 @@ namespace TestContainers.Core.Containers
 
                 return sb.ToString();
             }
-            
+
         }
 
         private Task<string> FindContainerForReuse(string hash)
@@ -405,11 +408,12 @@ namespace TestContainers.Core.Containers
 
         protected ILogger Logger => DockerLoggerFactory.GetLogger(this.ImageName);
 
+#if !NETSTANDARD2_0
         public ValueTask DisposeAsync()
         {
             throw new NotImplementedException();
         }
-
+#endif
 
         //{
         //    var started = await _dockerClient.Containers.StartContainerAsync(_containerId, new ContainerStartParameters());

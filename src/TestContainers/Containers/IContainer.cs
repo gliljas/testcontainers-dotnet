@@ -16,6 +16,10 @@ namespace TestContainers
     /// A docker container
     /// </summary>
     public interface IContainer : IContainerState
+#if !NETSTANDARD2_0
+        , IAsyncDisposable
+#endif
+
     {
 
         void SetCommand(params string[] commandParts);
@@ -30,46 +34,7 @@ namespace TestContainers
 
         void AddExposedPorts(params int[] ports);
 
-        IContainer WaitingFor(IWaitStrategy waitStrategy);
 
-        IContainer WithFileSystemBind(string hostPath, string containerPath);
-
-        IContainer WithFileSystemBind(string hostPath, string containerPath, AccessMode accessMode);
-
-        IContainer WithVolumesFrom(IContainer container, AccessMode accessMode);
-
-        IContainer WithExposedPorts(params int[] ports);
-        //IContainer WithCopyFileToContainer(MountableFile mountableFile, string containerPath);
-
-        IContainer WithEnv(string key, string value);
-
-        IContainer WithEnv(string key, Func<string,string> value);
-
-        IContainer WithEnv(IDictionary<string,string> env);
-        IContainer WithLabel(string key, string value);
-        IContainer WithLabels(IDictionary<string, string> labels);
-
-        IContainer WithCommand(params string[] commandParts);
-
-        IContainer WithExtraHost(string hostname, string ipAddress);
-
-        IContainer WithNetworkMode(string networkMode);
-
-        IContainer WithNetwork(INetwork network);
-
-        IContainer WithNetworkAliases(params string[] aliases);
-
-        IContainer WithImagePullPolicy(IImagePullPolicy policy);
-
-        IContainer WithStartupTimeout(TimeSpan duration);
-
-        IContainer WithPrivilegedMode(bool mode);
-
-        IContainer WithMinimumRunningDuration(TimeSpan minimumRunningDuration);
-
-        IContainer WithStartupCheckStrategy(IStartupCheckStrategy strategy);
-
-        IContainer WithWorkingDirectory(string workingDirectory);
 
         void SetDockerImageName(string dockerImageName);
 
@@ -77,11 +42,11 @@ namespace TestContainers
 
         string GetTestHostIpAddress();
 
-        void FollowOutput(IConsumer<OutputFrame> consumer);
+        void FollowOutput(IProgress<string> consumer);
 
-        void FollowOutput(IConsumer<OutputFrame> consumer, params OutputFrame.OutputType[] types);
+        void FollowOutput(IProgress<string> consumer, params OutputType[] types);
 
-        IContainer WithLogConsumer(IConsumer<OutputFrame> consumer);
+        IContainer WithLogConsumer(IProgress<string> consumer);
 
         IReadOnlyList<string> GetPortBindings();
 

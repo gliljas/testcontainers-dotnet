@@ -10,7 +10,7 @@ namespace TestContainers.Tests.Containers.Wait.Strategy
     public class DockerHealthcheckWaitStrategyTest
     {
 
-        private GenericContainer _container;
+        private IContainerState _container;
 
         public DockerHealthcheckWaitStrategyTest()
         {
@@ -28,7 +28,7 @@ namespace TestContainers.Tests.Containers.Wait.Strategy
         }
 
         [Fact]
-        public void containerStartFailsIfContainerIsUnhealthy()
+        public async Task ContainerStartFailsIfContainerIsUnhealthy()
         {
             _container.WithCommand("tail", "-f", "/dev/null");
 

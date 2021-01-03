@@ -20,10 +20,12 @@ namespace TestContainers
             throw new NotImplementedException();
         }
 
+#if !NETSTANDARD2_0
         public ValueTask DisposeAsync()
         {
             throw new NotImplementedException();
         }
+#endif
 
         private async Task<string> Create(CancellationToken cancellationToken)
         {

@@ -24,8 +24,9 @@ namespace TestContainers.Tests.Images
         [Fact]
         public async Task PullsByDefault()
         {
-            await using (GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
-                .WithStartupCheckStrategy(new OneShotStartupCheckStrategy()))
+            await using (var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
+                .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                .Build())
             {
                 await container.Start();
             }
@@ -35,8 +36,9 @@ namespace TestContainers.Tests.Images
         public async Task ShouldAlwaysPull()
         {
 
-            await using (GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
-                .WithStartupCheckStrategy(new OneShotStartupCheckStrategy()))
+            await using (var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
+                .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                .Build())
             {
 
                 await container.Start();
@@ -44,9 +46,9 @@ namespace TestContainers.Tests.Images
                 await RemoveImage();
             }
             await using (
-                GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
                     .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
-
+                    .Build()
             )
             {
                 await ExpectToFailWithNotFoundException(container);
@@ -54,12 +56,13 @@ namespace TestContainers.Tests.Images
 
             await using (
                 // built_in_image_pull_policy {
-                GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
                     .WithImagePullPolicy(PullPolicy.AlwaysPull)
+                    .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                    .Build()
             // }
             )
             {
-                container.WithStartupCheckStrategy(new OneShotStartupCheckStrategy());
                 await container.Start();
             }
         }
@@ -69,12 +72,13 @@ namespace TestContainers.Tests.Images
         {
             await using (
                 // custom_image_pull_policy {
-                GenericContainer container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
                     .WithImagePullPolicy(new EnvironmentBasedImagePullPolicy())
+                    .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                    .Build()
     // }
     )
             {
-                container.WithStartupCheckStrategy(new OneShotStartupCheckStrategy());
                 await container.Start();
             }
         }
@@ -87,9 +91,10 @@ namespace TestContainers.Tests.Images
             //policy.ShouldPullCached(Arg.Any<DockerImageName>(), Arg.Any<ImageData>()).Returns(false);
 
             await using (
-                var container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
                     .WithImagePullPolicy(policy)
                     .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                    .Build()
 
 
             )
@@ -115,9 +120,10 @@ namespace TestContainers.Tests.Images
         public async Task ShouldNotForcePulling()
         {
             await using (
-                var container = new GenericContainer(_dockerRegistryFixture.ImageName)
+                var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
                     .WithImagePullPolicy(_ => false)
                     .WithStartupCheckStrategy(new OneShotStartupCheckStrategy())
+                    .Build()
 
 
 

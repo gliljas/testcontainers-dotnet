@@ -13,10 +13,10 @@ namespace TestContainers.Containers
     public class ComposeServiceWaitStrategyTarget : AbstractWaitStrategyTarget
     {
         private readonly string _containerId;
-        private readonly GenericContainer _proxyContainer;
+        private readonly IContainerState _proxyContainer;
         private readonly Dictionary<int, int> _mappedPorts;
 
-        public ComposeServiceWaitStrategyTarget(string containerId, GenericContainer proxyContainer, Dictionary<int,int> mappedPorts)
+        public ComposeServiceWaitStrategyTarget(string containerId, IContainerState proxyContainer, Dictionary<int,int> mappedPorts)
         {
             if (string.IsNullOrEmpty(containerId))
             {

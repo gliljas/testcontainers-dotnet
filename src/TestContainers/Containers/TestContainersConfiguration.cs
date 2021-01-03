@@ -16,7 +16,7 @@ namespace TestContainers.Core.Containers
         [ContractAnnotation("_, !null -> !null")]
         public string GetEnvVarOrProperty(string propertyName, string defaultValue) => GetConfigurable(propertyName, defaultValue, _userProperties, _classpathProperties);
 
-        private string GetConfigurable(string propertyName, string defaultValue, Properties...propertiesSources)
+        private string GetConfigurable(string propertyName, string defaultValue, params Properties[] propertiesSources)
         {
             var envVarName = propertyName.Replace("\\.", "_").ToUpper();
             if (!envVarName.StartsWith("TESTCONTAINERS_"))
@@ -40,6 +40,11 @@ namespace TestContainers.Core.Containers
             return defaultValue;
         }
         internal void UpdateGlobalConfig(string v, string assemblyQualifiedName)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal static void SetInstance(TestContainersConfiguration configInstance)
         {
             throw new NotImplementedException();
         }

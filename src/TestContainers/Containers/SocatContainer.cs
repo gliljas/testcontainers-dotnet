@@ -17,8 +17,8 @@ namespace TestContainers.Containers
 
         public SocatContainer(DockerImageName dockerImageName) : base(dockerImageName)
         {
-            WithCreateContainerCmdModifier(it=>it.WithEntrypoint("/bin/sh"));
-            WithCreateContainerCmdModifier(it=>it.WithName("testcontainers-socat-" + Base58.RandomString(8)));
+            //WithCreateContainerCmdModifier(it=>it.WithEntrypoint("/bin/sh"));
+            //WithCreateContainerCmdModifier(it=>it.WithName("testcontainers-socat-" + Base58.RandomString(8)));
         }
 
         public SocatContainer WithTarget(int exposedPort, string host)
