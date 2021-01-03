@@ -17,6 +17,7 @@ using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Images;
 using TestContainers.Lifecycle;
+using TestContainers.Utility;
 
 namespace TestContainers.Core.Containers
 {
@@ -40,7 +41,7 @@ namespace TestContainers.Core.Containers
         //private const string TcpExposedPortFormat = "{0}/tcp";
 
         //static readonly UTF8Encoding Utf8EncodingWithoutBom = new UTF8Encoding(false);
-        private readonly IDockerClient _dockerClient = DockerClientFactory.Instance.Client();
+        protected readonly IDockerClient _dockerClient = DockerClientFactory.Instance.Client();
 
         private static readonly IRateLimiter DockerClientRateLimiter = null;
         private readonly string COPIED_FILES_HASH_LABEL = "testcontainers.dotnet.copied_files.hash";
@@ -401,6 +402,8 @@ namespace TestContainers.Core.Containers
         {
             throw new NotImplementedException();
         }
+
+        protected ILogger Logger => DockerLoggerFactory.GetLogger(this.ImageName);
 
         public ValueTask DisposeAsync()
         {

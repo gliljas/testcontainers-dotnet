@@ -12,14 +12,24 @@ namespace TestContainers.Containers
 {
     public class ComposeServiceWaitStrategyTarget : AbstractWaitStrategyTarget
     {
-        private readonly IContainer _container;
+        private readonly string _containerId;
         private readonly GenericContainer _proxyContainer;
         private readonly Dictionary<int, int> _mappedPorts;
 
-        public ComposeServiceWaitStrategyTarget(IContainer container, GenericContainer proxyContainer, Dictionary<int,int> mappedPorts)
+        public ComposeServiceWaitStrategyTarget(string containerId, GenericContainer proxyContainer, Dictionary<int,int> mappedPorts)
         {
-            _container = container;
-            _proxyContainer = proxyContainer;
+            if (string.IsNullOrEmpty(containerId))
+            {
+                throw new ArgumentException($"'{nameof(containerId)}' cannot be null or empty", nameof(containerId));
+            }
+
+            if (mappedPorts is null)
+            {
+                throw new ArgumentNullException(nameof(mappedPorts));
+            }
+
+            _containerId = containerId;
+            _proxyContainer = proxyContainer ?? throw new ArgumentNullException(nameof(proxyContainer));
             _mappedPorts = mappedPorts.ToDictionary(x => x.Key, x => x.Value);
         }
 
@@ -34,7 +44,7 @@ namespace TestContainers.Containers
         }
         public override string Host => _proxyContainer.Host;
 
-        public override string ContainerId => _container.ContainerId;
+        public override string ContainerId => _containerId;
 
         public override ContainerInspectResponse ContainerInfo => throw new NotImplementedException();
     }
