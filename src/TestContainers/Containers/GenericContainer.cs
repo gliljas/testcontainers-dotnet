@@ -13,7 +13,9 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Polly;
 using TestContainers.Containers;
+using TestContainers.Containers.Mounts;
 using TestContainers.Containers.StartupStrategies;
+using TestContainers.Containers.Wait.Strategy;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Images;
 using TestContainers.Lifecycle;
@@ -112,10 +114,10 @@ namespace TestContainers.Core.Containers
 
                 var startupAttempts = 3;
 
-                await Policy
+                await Policy<bool>
                     .Handle<Exception>()//ex => !(ex is OperationCancelledException)
-                    .OrResult<bool>(x => x == false)
-                    .Retry(startupAttempts - 1)
+                    .OrResult(x => x == false)
+                    .RetryAsync(startupAttempts - 1)
                     .ExecuteAsync(async (token) =>
                     {
                         _logger.LogDebug("Trying to start container: {imageName} (attempt {attempt}/{startupAttempts})", ImageName, Interlocked.Increment(ref attempt), startupAttempts);
@@ -406,7 +408,34 @@ namespace TestContainers.Core.Containers
             throw new NotImplementedException();
         }
 
+        public Task FollowOutput(IProgress<string> consumer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task FollowOutput(IProgress<string> consumer, params OutputType[] types)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetImage()
+        {
+            throw new NotImplementedException();
+        }
+
         protected ILogger Logger => DockerLoggerFactory.GetLogger(this.ImageName);
+
+        public string TestHostIpAddress => throw new NotImplementedException();
+
+        public IReadOnlyList<string> PortBindings => throw new NotImplementedException();
+
+        public IReadOnlyList<string> ExtraHosts => throw new NotImplementedException();
+
+        public IReadOnlyDictionary<string, string> EnvMap => throw new NotImplementedException();
+
+        public string[] CommandParts => throw new NotImplementedException();
+
+        public IReadOnlyList<IBind> Binds => throw new NotImplementedException();
 
 #if !NETSTANDARD2_0
         public ValueTask DisposeAsync()

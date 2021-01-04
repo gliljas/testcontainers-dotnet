@@ -17,6 +17,16 @@ namespace TestContainers
 
         protected override bool IsApplicable() => EnvironmentHelper.IsWindows();
 
+        protected override bool IsPersistable()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override IDockerClient GetDockerClient()
+        {
+            throw new NotImplementedException();
+        }
+
         protected override string Description => "Docker for Windows (via named pipes)";
 
     }

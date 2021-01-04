@@ -12,6 +12,7 @@ using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
 using TestContainers;
+using TestContainers.Containers.Mounts;
 using TestContainers.Containers.Output;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
@@ -23,6 +24,9 @@ using TestContainers.Utility;
 namespace TestContainers.Containers
 {
     public class DockerComposeContainer : IContainer
+#if !NETSTANDARD2_0
+        , IAsyncDisposable
+#endif
     {
         private ILogger _logger;
         /**
@@ -56,6 +60,26 @@ namespace TestContainers.Containers
      * necessarily to containers that are spawned by Compose itself)
      */
         private Dictionary<string, string> _env = new Dictionary<string, string>();
+
+        public string ImageName => throw new NotImplementedException();
+
+        public string TestHostIpAddress => throw new NotImplementedException();
+
+        public IReadOnlyList<string> PortBindings => throw new NotImplementedException();
+
+        public IReadOnlyList<string> ExtraHosts => throw new NotImplementedException();
+
+        public IReadOnlyDictionary<string, string> EnvMap => throw new NotImplementedException();
+
+        public string[] CommandParts => throw new NotImplementedException();
+
+        public IReadOnlyList<IBind> Binds => throw new NotImplementedException();
+
+        public string Host => throw new NotImplementedException();
+
+        public ContainerInspectResponse ContainerInfo => throw new NotImplementedException();
+
+        public string ContainerId => throw new NotImplementedException();
 
         public DockerComposeContainer(params FileInfo[] composeFiles) : this(composeFiles.ToList())
         {
@@ -280,14 +304,14 @@ namespace TestContainers.Containers
             }
 
             await dockerCompose
-                .WithCommand(cmd)
-                .WithEnv(_env)
-                .Invoke();
+                //  .WithCommand(cmd)
+                // .WithEnv(_env)
+                .Invoke(default);
         }
 
         internal async Task<List<ContainerListResponse>> ListChildContainers()
         {
-            return (await DockerClientFactory.Instance.Execute(c=>c.Containers.ListContainersAsync(new ContainersListParameters { All = true })))
+            return (await DockerClientFactory.Instance.Execute(c => c.Containers.ListContainersAsync(new ContainersListParameters { All = true })))
                 .Where(container => container.Names.Any(name =>
                       name.StartsWith("/" + _project))).ToList();
         }
@@ -301,6 +325,100 @@ namespace TestContainers.Containers
         {
             throw new NotImplementedException();
         }
+
+        public Task FollowOutput(IProgress<string> consumer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task FollowOutput(IProgress<string> consumer, params OutputType[] types)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetImage()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<string> GetContainerIpAddress(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> IsRunning(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> IsCreated(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> IsHealthy(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ContainerInspectResponse> GetCurrentContainerInfo(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> GetFirstMappedPort(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<int> GetMappedPort(int originalPort, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<string>> GetPortBindings(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<IReadOnlyList<string>> GetBoundPortNumbers(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task CopyFileToContainer(FileInfo fileInfo, string containerPath, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task CopyFileFromContainer(string containerPath, string destinationPath, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task CopyFileFromContainer(string containerPath, Func<Stream> destinationFunc, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task CopyFileFromContainer(string containerPath, Func<Stream, Task> destinationFunc, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+#if !NETSTANDARD2_0
+        public ValueTask DisposeAsync()
+        {
+            throw new NotImplementedException();
+        }
+#endif
+
+
     }
 
     internal class ContainerisedDockerCompose : GenericContainer, IDockerCompose
@@ -308,7 +426,7 @@ namespace TestContainers.Containers
         string ENV_PROJECT_NAME = "COMPOSE_PROJECT_NAME";
         string ENV_COMPOSE_FILE = "COMPOSE_FILE";
 
-        public static readonly char UNIX_PATH_SEPERATOR = ':';
+        public static readonly string UNIX_PATH_SEPARATOR = ":";
         public static readonly DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.Parse("docker/compose:1.24.1");
 
         public ContainerisedDockerCompose(IEnumerable<FileInfo> composeFiles, string identifier) : base(DEFAULT_IMAGE_NAME)
@@ -324,21 +442,21 @@ namespace TestContainers.Containers
             var absoluteDockerComposeFiles = composeFiles
                 .Select(x => x.FullName)
                 .Select(x => MountableFile.ForHostPath(x))
-                .Select(x => x.GetFilesystemPath())
+                .Select(x => x.FileSystemPath)
                 .Select(x => ConvertToUnixFilesystemPath(x))
                 .ToList();
 
-            var composeFileEnvVariableValue = string.Join(UNIX_PATH_SEPERATOR, absoluteDockerComposeFiles); // we always need the UNIX path separator
+            var composeFileEnvVariableValue = string.Join(UNIX_PATH_SEPARATOR, absoluteDockerComposeFiles); // we always need the UNIX path separator
             Logger.LogDebug("Set env COMPOSE_FILE={composeFileEnvVariableValue}", composeFileEnvVariableValue);
 
             AddEnv(ENV_COMPOSE_FILE, composeFileEnvVariableValue);
-            AddFileSystemBind(pwd, containerPwd, READ_WRITE);
+            AddFileSystemBind(pwd, containerPwd, AccessMode.ReadWrite);
 
             // Ensure that compose can access docker. Since the container is assumed to be running on the same machine
             //  as the docker daemon, just mapping the docker control socket is OK.
             // As there seems to be a problem with mapping to the /var/run directory in certain environments (e.g. CircleCI)
             //  we map the socket file outside of /var/run, as just /docker.sock
-            AddFileSystemBind(DockerClientFactory.Instance.GetRemoteDockerUnixSocketPath(), "/docker.sock", READ_WRITE);
+            AddFileSystemBind(DockerClientFactory.Instance.GetRemoteDockerUnixSocketPath(), "/docker.sock", AccessMode.ReadWrite);
             AddEnv("DOCKER_HOST", "unix:///docker.sock");
             SetStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
             SetWorkingDirectory(containerPwd);
@@ -371,7 +489,7 @@ namespace TestContainers.Containers
             await FollowOutput(new LoggerConsumer(Logger));
 
             // wait for the compose container to stop, which should only happen after it has spawned all the service containers
-            Logger.LogInformation("Docker Compose container is running for command: {command}", string.Join(" ", GetCommandParts()));
+            Logger.LogInformation("Docker Compose container is running for command: {command}", string.Join(" ", CommandParts));
 
             while (await IsRunning(cancellationToken))
             {
@@ -381,9 +499,9 @@ namespace TestContainers.Containers
             }
             Logger.LogInformation("Docker Compose has finished running");
 
-            AuditLogger.DoComposeLog(GetCommandParts(), GetEnv());
+            //AuditLogger.DoComposeLog(CommandParts, Env);
 
-            var exitCode = (await DockerClientFactory.Instance.Execute(c=>c.Containers.InspectContainerAsync(ContainerId))).State?.ExitCode;
+            var exitCode = (await DockerClientFactory.Instance.Execute(c => c.Containers.InspectContainerAsync(ContainerId))).State?.ExitCode;
 
             if (exitCode == null || exitCode != 0)
             {
@@ -391,11 +509,11 @@ namespace TestContainers.Containers
                     "Containerised Docker Compose exited abnormally with code " +
                     exitCode +
                     " whilst running command: " +
-                    string.Join(' ', this.GetCommandParts()));
+                    string.Join(" ", CommandParts));
             }
         }
 
-        
+
         private string ConvertToUnixFilesystemPath(string path)
         {
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows)

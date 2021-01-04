@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 
 namespace TestContainers.Containers.WaitStrategies
 {
@@ -11,6 +12,11 @@ namespace TestContainers.Containers.WaitStrategies
         {
             _waitStrategyTarget = waitStrategyTarget;
             this.externalLivenessCheckPorts = externalLivenessCheckPorts;
+        }
+
+        internal bool Check()
+        {
+            throw new NotImplementedException();
         }
     }
 }

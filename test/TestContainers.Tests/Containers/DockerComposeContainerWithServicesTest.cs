@@ -27,7 +27,7 @@ namespace TestContainers.Tests.Containers
             {
                 await compose.Start();
 
-                VerifyStartedContainers(compose, "redis_1");
+                await VerifyStartedContainers(compose, "redis_1");
             }
         }
 
@@ -43,7 +43,7 @@ namespace TestContainers.Tests.Containers
             {
                 await compose.Start();
 
-                VerifyStartedContainers(compose, "redis_1", "redis_2");
+                await VerifyStartedContainers(compose, "redis_1", "redis_2");
             }
         }
 
@@ -61,7 +61,7 @@ namespace TestContainers.Tests.Containers
             {
                 await compose.Start();
 
-                VerifyStartedContainers(compose, "redis_1", "redis_2");
+                await VerifyStartedContainers(compose, "redis_1", "redis_2");
             }
         }
 
@@ -80,7 +80,7 @@ namespace TestContainers.Tests.Containers
             {
                 await compose.Start();
 
-                VerifyStartedContainers(compose, "redis_1", "redis_2", "other_1");
+                await VerifyStartedContainers(compose, "redis_1", "redis_2", "other_1");
             }
         }
 
@@ -97,7 +97,7 @@ namespace TestContainers.Tests.Containers
             {
                 await compose.Start();
 
-                VerifyStartedContainers(compose, "redis_1", "other_1");
+                await VerifyStartedContainers(compose, "redis_1", "other_1");
             }
         }
 

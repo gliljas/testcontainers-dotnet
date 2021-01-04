@@ -5,15 +5,16 @@ using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Polly;
+using Polly.Wrap;
 
 namespace TestContainers.Containers.StartupStrategies
 {
     public abstract class AbstractStartupCheckStrategy : IStartupCheckStrategy
     {
-        private Policy<StartupStatus> p = Policy
+        private AsyncPolicyWrap<StartupStatus> p = Policy
                .TimeoutAsync<StartupStatus>(TimeSpan.FromMinutes(2))
-               .WrapAsync<StartupStatus>(Policy
-                    .HandleResult<StartupStatus>(x => x == StartupStatus.NotYetKnown)
+               .WrapAsync<StartupStatus>(Policy<StartupStatus>
+                    .HandleResult(x => x == StartupStatus.NotYetKnown)
                     .WaitAndRetryForeverAsync(
                        iteration => TimeSpan.FromSeconds(1),
                        (exception, timespan) => Console.WriteLine("hjhj")));

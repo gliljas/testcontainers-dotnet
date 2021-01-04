@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Polly;
+using TestContainers.Containers.Wait.Strategy;
 using TestContainers.Core.Containers;
 
 namespace TestContainers.Containers.WaitStrategies

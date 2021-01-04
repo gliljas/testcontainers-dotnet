@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Docker.DotNet.Models;
 using TestContainers.Containers;
 using TestContainers.Containers.Mounts;
@@ -14,7 +15,12 @@ namespace TestContainers.Core.Containers
     {
         private ContainerOptions _options = new ContainerOptions();
 
-        public ContainerBuilder(DockerImageName dockerImage)
+        public ContainerBuilder(DockerImageName dockerImage) : this(Task.FromResult(dockerImage))
+        {
+
+        }
+
+        public ContainerBuilder(Task<DockerImageName> dockerImage)
         {
 
         }
@@ -67,6 +73,8 @@ namespace TestContainers.Core.Containers
         public ContainerBuilder<T> WithWorkingDirectory(string workingDirectory) => this;
 
         public ContainerBuilder<T> WithCreateContainerCmdModifier(Action<CreateContainerParameters> modifier) => this;
+
+        public ContainerBuilder<T> WithLogConsumer(IProgress<string> consumer) => this;
         public T Build()
         {
             return default;
@@ -98,5 +106,9 @@ namespace TestContainers.Core.Containers
         {
             throw new NotImplementedException();
         }
+
+        internal DockerComposeContainerBuilder WithCommand(string cmd) => this;
+
+        internal DockerComposeContainerBuilder WithEnv(Dictionary<string, string> env) => this;
     }
 }

@@ -1,7 +1,9 @@
+using System.Threading.Tasks;
+
 namespace TestContainers.Images
 {
     public interface IImagePullPolicy
     {
-        bool ShouldPull(DockerImageName dockerImageName);
+        Task<bool> ShouldPull(DockerImageName dockerImageName);
     }
 }

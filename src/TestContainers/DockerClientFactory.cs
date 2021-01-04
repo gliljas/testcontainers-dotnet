@@ -57,6 +57,16 @@ namespace TestContainers
             throw new NotImplementedException();
         }
 
+        internal Task<TransportConfig> GetTransportConfig()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal object GetRemoteDockerUnixSocketPath()
+        {
+            throw new NotImplementedException();
+        }
+
         //public Task<IDockerClient> Client()
         //{
         //    return default;

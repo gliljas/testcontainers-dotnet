@@ -176,13 +176,13 @@ namespace TestContainers.Containers.WaitStrategies
             {
                 var p = Policy.TimeoutAsync(30).WrapAsync(
                   Policy.Handle<Exception>()
-                    .WaitAndRetryForeverAsync(attempt => TimeSpan.FromSeconds(1), null));
+                    .WaitAndRetryForeverAsync(attempt => TimeSpan.FromSeconds(1)));
 
                 await p.ExecuteAsync(async (token) =>
                 {
 
                     var request = new HttpRequestMessage(_method, uri);
-
+                    //TODO:
                     // connection.setReadTimeout(Math.toIntExact(readTimeout.toMillis()));
 
                     // authenticate

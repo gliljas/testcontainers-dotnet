@@ -14,6 +14,18 @@ namespace TestContainers
 
         protected override bool IsApplicable() => EnvironmentHelper.IsOSX() || EnvironmentHelper.IsLinux();
 
-        protected override string GetDescription() => "Docker for Linux/Mac (via socket)";
+        protected override bool IsPersistable()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override IDockerClient GetDockerClient()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override string Description => "Docker for Linux/Mac (via socket)";
+
+        protected override int Priority => throw new NotImplementedException();
     }
 }

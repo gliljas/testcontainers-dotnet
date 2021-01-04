@@ -16,7 +16,7 @@ namespace TestContainers.Tests.Images
             Assert.Contains("imageName=" + imageName, remoteDockerImage.ToString());
         }
 
-      //  [Fact]
+        [Fact]
         public void ToStringWithExceptionContainsOnlyImageNameFuture()
         {
             var imageNameFuture = new TaskCompletionSource<string>();

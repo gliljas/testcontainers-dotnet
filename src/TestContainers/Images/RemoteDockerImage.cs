@@ -35,7 +35,7 @@ namespace TestContainers.Images
             //Logger logger = DockerLoggerFactory.getLogger(imageName.toString());
             try
             {
-                if (!_imagePullPolicy.ShouldPull(imageName))
+                if (!await _imagePullPolicy.ShouldPull(imageName))
                 {
                     return imageName.AsCanonicalNameString();
                 }

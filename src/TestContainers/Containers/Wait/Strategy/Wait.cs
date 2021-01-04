@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using TestContainers.Containers.WaitStrategies;
 
-namespace TestContainers.Containers.WaitStrategies
+namespace TestContainers.Containers.Wait.Strategy
 {
     public static class Wait
     {
@@ -35,7 +36,7 @@ namespace TestContainers.Containers.WaitStrategies
          * @return the WaitStrategy
          * @see HttpWaitStrategy
          */
-        public static HttpWaitStrategy ForHttp(String path)
+        public static HttpWaitStrategy ForHttp(string path)
         {
             return new HttpWaitStrategy()
                     .ForPath(path);
@@ -48,7 +49,7 @@ namespace TestContainers.Containers.WaitStrategies
          * @return the WaitStrategy
          * @see HttpWaitStrategy
          */
-        public static HttpWaitStrategy ForHttps(String path)
+        public static HttpWaitStrategy ForHttps(string path)
         {
             return ForHttp(path)
                     .UsingTls();
@@ -76,7 +77,7 @@ namespace TestContainers.Containers.WaitStrategies
             return new DockerHealthcheckWaitStrategy();
         }
 
-        
+
     }
 
     public interface IRateLimiter

@@ -16,20 +16,22 @@ namespace TestContainers.Tests.Containers
             await using (
                     Network network = Network.NewNetwork())
             await using (
-                GenericContainer foo = new GenericContainer(TestImages.TINY_IMAGE)
+                var foo = new ContainerBuilder<GenericContainer>(TestImages.TINY_IMAGE)
                         .WithNetwork(network)
                         .WithNetworkAliases("foo")
-                        .WithCommand("/bin/sh", "-c", "while true ; do printf 'HTTP/1.1 200 OK\\n\\nyay' | nc -l -p 8080; done"))
-            await using (GenericContainer bar = new GenericContainer(TestImages.TINY_IMAGE)
+                        .WithCommand("/bin/sh", "-c", "while true ; do printf 'HTTP/1.1 200 OK\\n\\nyay' | nc -l -p 8080; done")
+                        .Build())
+            await using (var bar = new ContainerBuilder<GenericContainer>(TestImages.TINY_IMAGE)
                         .WithNetwork(network)
                         .WithCommand("top")
+                        .Build()
             )
             {
                 await foo.Start();
                 await bar.Start();
 
-                var response = (await bar.ExecInContainer("wget", "-O", "-", "http://foo:8080")).GetStdout();
-                Assert.Equals("yay", response); //"received response"
+                var response = (await bar.ExecInContainer("wget", "-O", "-", "http://foo:8080")).Stdout;
+                Assert.Equal("yay", response); //"received response"
             }
         }
 
@@ -82,7 +84,7 @@ namespace TestContainers.Tests.Containers
 
                 );
 
-                network.Close();
+                await network.Close();
 
                 Assert.NotEqual(
 

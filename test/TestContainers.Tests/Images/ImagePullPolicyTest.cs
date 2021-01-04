@@ -43,7 +43,7 @@ namespace TestContainers.Tests.Images
 
                 await container.Start();
 
-                await RemoveImage();
+                await _dockerRegistryFixture.RemoveImage();
             }
             await using (
                 var container = new ContainerBuilder<GenericContainer>(_dockerRegistryFixture.ImageName)
@@ -101,19 +101,20 @@ namespace TestContainers.Tests.Images
             {
                 await container.Start();
 
-                policy.Received().ShouldPull(Arg.Any<DockerImageName>());
+                _ = policy.Received().ShouldPull(Arg.Any<DockerImageName>());
             }
         }
         private class EnvironmentBasedImagePullPolicy : AbstractImagePullPolicy
         {
-            public override bool ShouldPull(DockerImageName dockerImageName)
+            public override Task<bool> ShouldPull(DockerImageName dockerImageName)
             {
-                {
-                    return Environment.GetEnvironmentVariable("ALWAYS_PULL_IMAGE") != null;
-
-                }
+                return Task.FromResult(Environment.GetEnvironmentVariable("ALWAYS_PULL_IMAGE") != null);
             }
 
+            protected override bool ShouldPullCached(DockerImageName imageName, ImageData localImageData)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         [Fact]
@@ -161,7 +162,7 @@ namespace TestContainers.Tests.Images
             // Clean up local cache
             await _dockerRegistryFixture.RemoveImage();
 
-            LocalImagesCache.Instance.Cache.Remove(_dockerRegistryFixture.ImageName);
+            LocalImagesCache.Instance.Cache.TryRemove(_dockerRegistryFixture.ImageName, out _);
         }
 
         public async Task DisposeAsync()
@@ -172,6 +173,6 @@ namespace TestContainers.Tests.Images
 
 
 
-       
+
     }
 }

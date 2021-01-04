@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Microsoft.Extensions.Logging;
+using Polly;
 using TestContainers.Containers;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
@@ -79,17 +80,19 @@ namespace TestContainers.Tests.Containers
 
             public override async Task WaitUntilReady(IWaitStrategyTarget target, CancellationToken cancellationToken = default)
             {
-                //Unreliables.retryUntilTrue(5, TimeUnit.SECONDS, async ()=> {
-                var state = (await target.GetCurrentContainerInfo(cancellationToken)).State;
-
-                _logger.LogDebug("Current state: {state}", state);
-                if (!"exited".Equals(state.Status, StringComparison.OrdinalIgnoreCase))
+                var p = Policy.TimeoutAsync<bool>(5).WrapAsync<bool>(Policy<bool>.Handle<Exception>().OrResult(x => false).RetryForeverAsync());
+                await p.ExecuteAsync(async () =>
                 {
-                    await Task.Delay(100);
-                    return false;
-                }
-                return _predicate(state);
-                //                });
+                    var state = (await target.GetCurrentContainerInfo(cancellationToken)).State;
+
+                    _logger.LogDebug("Current state: {state}", state);
+                    if (!"exited".Equals(state.Status, StringComparison.OrdinalIgnoreCase))
+                    {
+                        await Task.Delay(100);
+                        return false;
+                    }
+                    return _predicate(state);
+                });
 
                 throw new IllegalStateException("Nope!");
             }

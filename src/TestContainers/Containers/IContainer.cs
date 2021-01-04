@@ -22,61 +22,59 @@ namespace TestContainers
 
     {
 
-        void SetCommand(params string[] commandParts);
+        //void SetCommand(params string[] commandParts);
 
-        void AddEnv(string key, string value);
+        //void AddEnv(string key, string value);
 
-        void AddFileSystemBind(string hostPath, string containerPath, AccessMode accessMode);
+        //void AddFileSystemBind(string hostPath, string containerPath, AccessMode accessMode);
 
-        void AddFileSystemBind(string hostPath, string containerPath, AccessMode mode, SelinuxContext selinuxContext);
+        //void AddFileSystemBind(string hostPath, string containerPath, AccessMode mode, SelinuxContext selinuxContext);
 
-        void AddExposedPort(int port);
+        //void AddExposedPort(int port);
 
-        void AddExposedPorts(params int[] ports);
+        //void AddExposedPorts(params int[] ports);
 
 
 
-        void SetDockerImageName(string dockerImageName);
+        //void SetDockerImageName(string dockerImageName);
 
-        string GetDockerImageName();
+        string ImageName { get; }
 
-        string GetTestHostIpAddress();
+        string TestHostIpAddress { get; }
 
-        void FollowOutput(IProgress<string> consumer);
+        Task FollowOutput(IProgress<string> consumer);
 
-        void FollowOutput(IProgress<string> consumer, params OutputType[] types);
+        Task FollowOutput(IProgress<string> consumer, params OutputType[] types);
 
-        IContainer WithLogConsumer(IProgress<string> consumer);
+        IReadOnlyList<string> PortBindings { get; }
 
-        IReadOnlyList<string> GetPortBindings();
-
-        IReadOnlyList<string> GetExtraHosts();
+        IReadOnlyList<string> ExtraHosts { get; }
 
         Task<string> GetImage();
 
-        IDictionary<string, string> GetEnvMap();
+        IReadOnlyDictionary<string, string> EnvMap { get; }
 
-        string[] GetCommandParts();
+        string[] CommandParts { get; }
 
-        IReadOnlyList<IBind> GetBinds();
+        IReadOnlyList<IBind> Binds { get; }
 
         //IDockerClient GetDockerClient();
 
-        void SetExposedPorts(List<int> exposedPorts);
+        //void SetExposedPorts(List<int> exposedPorts);
 
-        void SetPortBindings(List<string> portBindings);
+        //void SetPortBindings(List<string> portBindings);
 
-        void SetExtraHosts(List<string> extraHosts);
+        //void SetExtraHosts(List<string> extraHosts);
 
-        void SetImage(Task<string> image);
+        //void SetImage(Task<string> image);
 
-        void SetEnv(List<string> env);
+        //void SetEnv(List<string> env);
 
-        void SetCommandParts(string[] commandParts);
+        //void SetCommandParts(string[] commandParts);
 
-        void SetBinds(List<IBind> binds);
+        //void SetBinds(List<IBind> binds);
 
-        void SetWaitStrategy(IWaitStrategy waitStrategy);
+        //void SetWaitStrategy(IWaitStrategy waitStrategy);
 
         ///// <summary>
         ///// Gets the docker image used for this container

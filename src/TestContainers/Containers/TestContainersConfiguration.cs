@@ -14,9 +14,9 @@ namespace TestContainers.Core.Containers
         public string TransportType => GetEnvVarOrProperty("transport.type", "okhttp");
 
         [ContractAnnotation("_, !null -> !null")]
-        public string GetEnvVarOrProperty(string propertyName, string defaultValue) => GetConfigurable(propertyName, defaultValue, _userProperties, _classpathProperties);
+        public string GetEnvVarOrProperty(string propertyName, string defaultValue) => GetConfigurable(propertyName, defaultValue); //, _userProperties, _classpathProperties
 
-        private string GetConfigurable(string propertyName, string defaultValue, params Properties[] propertiesSources)
+        private string GetConfigurable(string propertyName, string defaultValue)//, params Properties[] propertiesSources
         {
             var envVarName = propertyName.Replace("\\.", "_").ToUpper();
             if (!envVarName.StartsWith("TESTCONTAINERS_"))
@@ -29,13 +29,13 @@ namespace TestContainers.Core.Containers
                 return value;
             }
 
-            for (var properties in propertiesSources)
-            {
-                if (properties.get(propertyName) != null)
-                {
-                    return (String) properties.get(propertyName);
-                }
-            }
+            //foreach (var properties in propertiesSources)
+            //{
+            //    if (properties.get(propertyName) != null)
+            //    {
+            //        return (String) properties.get(propertyName);
+            //    }
+            //}
 
             return defaultValue;
         }

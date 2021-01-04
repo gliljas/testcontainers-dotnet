@@ -10,13 +10,13 @@ namespace TestContainers.Tests.Images
 {
     public class DockerRegistryFixture : IAsyncLifetime
     {
-        public static GenericContainer _registry = new GenericContainer(DOCKER_REGISTRY_IMAGE)
-        .withExposedPorts(5000);
+        public static GenericContainer _registry = new ContainerBuilder<GenericContainer>(TestImages.DOCKER_REGISTRY_IMAGE)
+        .WithExposedPorts(5000).Build();
         private DockerImageName _imageName;
 
         public DockerImageName ImageName => _imageName;
 
-        public Task DisposeAsync()
+        public async Task DisposeAsync()
         {
             await RemoveImage();
         }
@@ -27,10 +27,10 @@ namespace TestContainers.Tests.Images
             var testImageName = testRegistryAddress + "/image-pull-policy-test";
             var tag = Guid.NewGuid().ToString("N");
 
-            ImageName = DockerImageName.Parse(testImageName).WithTag(tag);
+            _imageName = DockerImageName.Parse(testImageName).WithTag(tag);
 
             string dummySourceImage = "hello-world:latest";
-            await DockerClientFactory.Instance.Execute(c=>c.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = dummySourceImage }, new Progress<JSONMessage>()));//.exec(new PullImageResultCallback()).awaitCompletion();
+            await DockerClientFactory.Instance.Execute(c => c.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = dummySourceImage }, new AuthConfig(), new Progress<JSONMessage>()));//.exec(new PullImageResultCallback()).awaitCompletion();
 
             var dummyImageId = (await DockerClientFactory.Instance.Execute(c => c.Images.InspectImageAsync(dummySourceImage))).ID;
 
@@ -46,7 +46,7 @@ namespace TestContainers.Tests.Images
         {
             try
             {
-                await DockerClientFactory.Instance.Execute(c=>c
+                await DockerClientFactory.Instance.Execute(c => c
                     .Images.DeleteImageAsync(_imageName.AsCanonicalNameString(), new ImageDeleteParameters { Force = true }));
             }
             catch (DockerImageNotFoundException)

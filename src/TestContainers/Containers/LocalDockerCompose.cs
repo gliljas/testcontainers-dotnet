@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TestContainers.Utility;
@@ -49,7 +51,7 @@ namespace TestContainers.Containers
             return CommandLine.ExecutableExists(COMPOSE_EXECUTABLE);
         }
 
-        public async Task Invoke()
+        public async Task Invoke(CancellationToken cancellationToken)
         {
             // bail out early
             if (!ExecutableExists())
@@ -63,7 +65,7 @@ namespace TestContainers.Containers
             var dockerHost = Environment.GetEnvironmentVariable("DOCKER_HOST");
             if (dockerHost == null)
             {
-                TransportConfig transportConfig = DockerClientFactory.Instance.GetTransportConfig();
+                TransportConfig transportConfig = await DockerClientFactory.Instance.GetTransportConfig();
                 SslConfig sslConfig = transportConfig.SslConfig;
                 if (sslConfig != null)
                 {
