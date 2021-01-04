@@ -44,7 +44,7 @@ namespace TestContainers.Core.Containers
         //private const string TcpExposedPortFormat = "{0}/tcp";
 
         //static readonly UTF8Encoding Utf8EncodingWithoutBom = new UTF8Encoding(false);
-        protected readonly IDockerClient _dockerClient = DockerClientFactory.Instance.Client();
+        //protected readonly IDockerClient _dockerClient = DockerClientFactory.Instance.Client();
 
         private static readonly IRateLimiter DockerClientRateLimiter = null;
         private readonly string COPIED_FILES_HASH_LABEL = "testcontainers.dotnet.copied_files.hash";
@@ -204,7 +204,7 @@ namespace TestContainers.Core.Containers
 
                 if (!reused)
                 {
-                    var createResponse = await _dockerClient.Containers.CreateContainerAsync(createCommand, cancellationToken);
+                    var createResponse = await DockerClientFactory.Execute(c=>c.Containers.CreateContainerAsync(createCommand, cancellationToken));
 
                     _containerId = createResponse.ID;
 
@@ -220,7 +220,7 @@ namespace TestContainers.Core.Containers
 
                     _logger.LogInformation("Starting container with ID: {containerId}", _containerId);
 
-                    await _dockerClient.Containers.StartContainerAsync(_containerId, new ContainerStartParameters(), cancellationToken);
+                    await DockerClientFactory.Execute(c=>c.Containers.StartContainerAsync(_containerId, new ContainerStartParameters(), cancellationToken));
                 }
 
                 _logger.LogInformation("Container {} is starting: {}", dockerImageName, _containerId);
@@ -229,7 +229,7 @@ namespace TestContainers.Core.Containers
                 //this.logConsumers.forEach(this::followOutput);
 
                 // Tell subclasses that we're starting
-                _containerInfo = await _dockerClient.Containers.InspectContainerAsync(_containerId);
+                _containerInfo = await DockerClientFactory.Execute(c=>c.Containers.InspectContainerAsync(_containerId));
                 await ContainerIsStarting(_containerInfo, reused);
 
                 // Wait until the container has reached the desired running state

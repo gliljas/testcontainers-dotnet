@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using TestContainers.Containers;
@@ -12,16 +13,16 @@ namespace TestContainers.Tests
     public class DockerClientFactoryTest
     {
         [Fact]
-        public void RunCommandInsideDockerShouldNotFailIfImageDoesNotExistLocally()
+        public async Task RunCommandInsideDockerShouldNotFailIfImageDoesNotExistLocally()
         {
 
             var dockFactory = DockerClientFactory.Instance;
             try
             {
                 //remove tiny image, so it will be pulled during next command run
-                dockFactory.Client()
-                        .Images
-                        .DeleteImageAsync(TestImages.TINY_IMAGE.AsCanonicalNameString(), new ImageDeleteParameters { Force=true});
+                await dockFactory.Execute(c=>
+                        c.Images
+                        .DeleteImageAsync(TestImages.TINY_IMAGE.AsCanonicalNameString(), new ImageDeleteParameters { Force=true}));
             }
             catch (NotFoundException ignored)
             {

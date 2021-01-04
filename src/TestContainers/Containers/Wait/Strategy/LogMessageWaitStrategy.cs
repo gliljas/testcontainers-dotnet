@@ -15,7 +15,7 @@ namespace TestContainers.Containers.WaitStrategies
 
         protected override async Task WaitUntilReady(CancellationToken cancellationToken)
         {
-            var stream = await DockerClientFactory.Instance.Client().Containers.GetContainerLogsAsync(_waitStrategyTarget.ContainerId, new ContainerLogsParameters { Follow = true, Since = "0", ShowStdout = true, ShowStderr = true }, cancellationToken);
+            var stream = await DockerClientFactory.Instance.Execute(c=>c.Containers.GetContainerLogsAsync(_waitStrategyTarget.ContainerId, new ContainerLogsParameters { Follow = true, Since = "0", ShowStdout = true, ShowStderr = true }, cancellationToken));
         }
 
         public LogMessageWaitStrategy WithRegEx(string regexPattern)

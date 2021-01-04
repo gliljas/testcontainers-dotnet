@@ -32,7 +32,6 @@ namespace TestContainers.Containers
         private readonly IReadOnlyList<FileInfo> _composeFiles;
         private ISet<ParsedDockerComposeFile> _parsedComposeFiles;
         private readonly Dictionary<string, int> _scalingPreferences = new Dictionary<string, int>();
-        private IDockerClient _dockerClient;
         private bool _localCompose;
         private bool _pull = true;
         private bool _build = false;
@@ -81,7 +80,6 @@ namespace TestContainers.Containers
             _identifier = identifier;
             _project = RandomProjectId();
 
-            _dockerClient = DockerClientFactory.Instance.Client();
         }
 
         public async Task Start(CancellationToken cancellationToken = default)
@@ -289,7 +287,7 @@ namespace TestContainers.Containers
 
         internal async Task<List<ContainerListResponse>> ListChildContainers()
         {
-            return (await _dockerClient.Containers.ListContainersAsync(new ContainersListParameters { All = true }))
+            return (await DockerClientFactory.Instance.Execute(c=>c.Containers.ListContainersAsync(new ContainersListParameters { All = true })))
                 .Where(container => container.Names.Any(name =>
                       name.StartsWith("/" + _project))).ToList();
         }

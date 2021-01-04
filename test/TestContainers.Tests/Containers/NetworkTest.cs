@@ -46,7 +46,7 @@ namespace TestContainers.Tests.Containers
                 string id = network.Id;
                 Assert.Equal(
                         "macvlan",
-                        (await DockerClientFactory.Instance.Client().Networks.InspectNetworkAsync(id)).Driver//"Flag is set",
+                        (await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(id))).Driver//"Flag is set",
 
                 );
             }
@@ -64,7 +64,7 @@ namespace TestContainers.Tests.Containers
                 string id = network.Id;
                 Assert.Equal(
                         "macvlan",
-                        (await DockerClientFactory.Instance.Client().Networks.InspectNetworkAsync(id)).Driver // "Flag is set",
+                        (await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(id))).Driver // "Flag is set",
 
                 );
             }
@@ -78,7 +78,7 @@ namespace TestContainers.Tests.Containers
             {
                 string firstId = network.Id;
                 Assert.NotNull(
-                        await DockerClientFactory.Instance.Client().Networks.InspectNetworkAsync(firstId)// "Network exists",
+                        await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(firstId))// "Network exists",
 
                 );
 

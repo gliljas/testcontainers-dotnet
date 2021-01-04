@@ -29,26 +29,25 @@ namespace TestContainers.Tests.Images
 
             ImageName = DockerImageName.Parse(testImageName).WithTag(tag);
 
-            var client = DockerClientFactory.Instance.Client();
             string dummySourceImage = "hello-world:latest";
-            await client.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = dummySourceImage }, new Progress<JSONMessage>());//.exec(new PullImageResultCallback()).awaitCompletion();
+            await DockerClientFactory.Instance.Execute(c=>c.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = dummySourceImage }, new Progress<JSONMessage>()));//.exec(new PullImageResultCallback()).awaitCompletion();
 
-            var dummyImageId = (await client.Images.InspectImageAsync(dummySourceImage)).ID;
+            var dummyImageId = (await DockerClientFactory.Instance.Execute(c => c.Images.InspectImageAsync(dummySourceImage))).ID;
 
             // push the image to the registry
-            await client.Images.TagImageAsync(dummyImageId, new ImageTagParameters { Tag = tag });
+            await DockerClientFactory.Instance.Execute(c => c.Images.TagImageAsync(dummyImageId, new ImageTagParameters { Tag = tag }));
 
-            client.Images.PushImageAsync(_imageName.AsCanonicalNameString())
+            DockerClientFactory.Instance.Execute(c => c.Images.PushImageAsync(_imageName.AsCanonicalNameString())
                 .exec(new ResultCallback.Adapter<>())
-                .awaitCompletion(1, TimeUnit.MINUTES);
+                .awaitCompletion(1, TimeUnit.MINUTES));
         }
 
         public async Task RemoveImage()
         {
             try
             {
-                await DockerClientFactory.Instance.Client()
-                    .Images.DeleteImageAsync(_imageName.AsCanonicalNameString(), new ImageDeleteParameters { Force = true });
+                await DockerClientFactory.Instance.Execute(c=>c
+                    .Images.DeleteImageAsync(_imageName.AsCanonicalNameString(), new ImageDeleteParameters { Force = true }));
             }
             catch (DockerImageNotFoundException)
             {

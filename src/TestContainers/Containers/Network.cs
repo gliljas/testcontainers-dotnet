@@ -35,7 +35,7 @@ namespace TestContainers
                 CheckDuplicate = true
             };
 
-            var response = await DockerClientFactory.Instance.Client().Networks.CreateNetworkAsync(parameters, cancellationToken);
+            var response = await DockerClientFactory.Instance.Execute(c=>c.Networks.CreateNetworkAsync(parameters, cancellationToken));
 
             return response.ID;
         }

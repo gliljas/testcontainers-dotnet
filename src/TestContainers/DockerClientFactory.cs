@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Docker.DotNet;
 using Microsoft.Extensions.Logging;
 
@@ -37,10 +38,27 @@ namespace TestContainers
 
         public static IDockerClient LazyClient => LazyDockerClient.Instance;
 
-        public IDockerClient Client()
+
+        public async Task<T> Execute<T>(Func<IDockerClient, Task<T>> clientTask)
         {
-            return default;
+            var client = await GetClient();
+            return await clientTask.Invoke(client);
         }
+        public async Task Execute(Func<IDockerClient, Task> clientTask)
+        {
+            var client = await GetClient();
+            await clientTask.Invoke(client);
+        }
+
+        private async Task<IDockerClient> GetClient()
+        {
+            throw new NotImplementedException();
+        }
+
+        //public Task<IDockerClient> Client()
+        //{
+        //    return default;
+        //}
 
         //public IDockerClient Client()
         //{
@@ -146,4 +164,6 @@ namespace TestContainers
         //    return _dockerClient;
         //}
     }
+
+    
 }
