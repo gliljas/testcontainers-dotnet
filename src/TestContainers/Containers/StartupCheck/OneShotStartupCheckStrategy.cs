@@ -7,9 +7,9 @@ namespace TestContainers.Containers.StartupStrategies
 {
     public class OneShotStartupCheckStrategy : AbstractStartupCheckStrategy
     {
-        public override async Task<StartupStatus> CheckStartupState(IDockerClient dockerClient, string containerId)
+        public override async Task<StartupStatus> CheckStartupState(string containerId)
         {
-            var state = await GetCurrentState(dockerClient, containerId);
+            var state = await GetCurrentState(containerId);
 
             if (!state.IsContainerStopped())
             {

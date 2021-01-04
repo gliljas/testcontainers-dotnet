@@ -5,7 +5,7 @@ namespace TestContainers.Containers.StartupStrategies
 {
     public interface IStartupCheckStrategy
     {
-        Task<bool> WaitUntilStartupSuccessful(IDockerClient dockerClient, string containerId);
+        Task<bool> WaitUntilStartupSuccessful(string containerId);
 
     }
 }

@@ -28,17 +28,17 @@ namespace TestContainers.Containers
 
         public SocatContainer WithTarget(int exposedPort, string host, int internalPort)
         {
-            AddExposedPort(exposedPort);
+            //AddExposedPort(exposedPort);
             _targets[exposedPort]=string.Format("%s:%s", host, internalPort);
             return this;
         }
 
         protected override void Configure()
         {
-            WithCommand("-c",
-                    string.Join(" & ",_targets.Select(entry=>"socat TCP-LISTEN:" + entry.Key + ",fork,reuseaddr TCP:" + entry.Value))
+            //WithCommand("-c",
+            //        string.Join(" & ",_targets.Select(entry=>"socat TCP-LISTEN:" + entry.Key + ",fork,reuseaddr TCP:" + entry.Value))
                             
-            );
+            //);
         }
     }
 }

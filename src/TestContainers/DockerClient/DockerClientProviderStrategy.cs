@@ -173,7 +173,7 @@ namespace TestContainers
         public IDockerClient GetClient() => Config.CreateClient();
 
         protected abstract int Priority { get; }
-        public Exception Description { get; private set; }
+        protected abstract string Description { get;}
         public TransportConfig TransportConfig { get; private set; }
     }
 }

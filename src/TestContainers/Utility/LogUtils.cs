@@ -9,17 +9,16 @@ namespace TestContainers.Utility
 {
     public static class LogUtils
     {
-        public static async Task FollowOutput(IDockerClient dockerClient,
+        public static async Task FollowOutput(
                             string containerId,
                             IProgress<string> consumer,
                             params OutputType[] types)
         {
 
-            await AttachConsumer(dockerClient, containerId, consumer, true, types);
+            await AttachConsumer(containerId, consumer, true, types);
         }
 
         private static async Task AttachConsumer(
-        IDockerClient dockerClient,
         string containerId,
         IProgress<string> consumer,
         bool followStream,
@@ -42,7 +41,7 @@ namespace TestContainers.Utility
                 }
             }
 
-            await dockerClient.Containers.GetContainerLogsAsync(containerId, parameters, default, callback);
+            await DockerClientFactory.Instance.Execute(c=>c.Containers.GetContainerLogsAsync(containerId, parameters, default, callback));
         }
     }
 }

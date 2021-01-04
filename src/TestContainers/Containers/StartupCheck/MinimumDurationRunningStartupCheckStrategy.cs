@@ -15,13 +15,13 @@ namespace TestContainers.Containers.StartupStrategies
             _minimumRunningDuration = minimumRunningDuration;
         }
 
-        public override async Task<StartupStatus> CheckStartupState(IDockerClient dockerClient, string containerId)
+        public override async Task<StartupStatus> CheckStartupState(string containerId)
         {
             // record "now" before fetching status; otherwise the time to fetch the status
             // will contribute to how long the container has been running.
             var now = DateTimeOffset.Now;
 
-            var state = await GetCurrentState(dockerClient, containerId);
+            var state = await GetCurrentState(containerId);
 
             if (state.IsContainerRunning(_minimumRunningDuration, now))
             {

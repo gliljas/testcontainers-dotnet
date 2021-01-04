@@ -11,13 +11,11 @@ namespace TestContainers.Utility
     public sealed class ResourceReaper
     {
         private ILogger _logger;
-        private IDockerClient _dockerClient;
         private ConcurrentDictionary<string, string> _registeredContainers = new ConcurrentDictionary<string, string>();
         private ConcurrentDictionary<string, bool> _registeredNetworks = new ConcurrentDictionary<string, bool>();
         private ConcurrentDictionary<string, bool> _registeredImages = new ConcurrentDictionary<string, bool>();
         private ResourceReaper()
         {
-            _dockerClient = DockerClientFactory.Instance.Client();
         }
 
         private async Task RemoveNetwork(string id)
@@ -29,7 +27,7 @@ namespace TestContainers.Utility
                 {
                     // Try to find the network if it still exists
                     // Listing by ID first prevents docker-java logging an error if we just go blindly into removeNetworkCmd
-                    networks = await _dockerClient.Networks.ListNetworksAsync(new NetworksListParameters { Filters = { } });
+                    networks = await DockerClientFactory.Instance.Execute(c=>c.Networks.ListNetworksAsync(new NetworksListParameters { Filters = { } }));
                 }
                 catch (Exception e)
                 {
@@ -43,7 +41,7 @@ namespace TestContainers.Utility
                 {
                     try
                     {
-                        await _dockerClient.Networks.DeleteNetworkAsync(network.ID);
+                        await DockerClientFactory.Instance.Execute(c=>c.Networks.DeleteNetworkAsync(network.ID));
                         _registeredNetworks.TryRemove(network.ID, out bool _);
                        _logger.LogDebug("Removed network: {id}", id);
                     }
@@ -80,7 +78,7 @@ namespace TestContainers.Utility
             _logger.LogTrace("Removing image tagged {dockerImageName}", dockerImageName);
             try
             {
-                await _dockerClient.Images.DeleteImageAsync(dockerImageName, new ImageDeleteParameters { Force = true});
+                await DockerClientFactory.Instance.Execute(c=>c.Images.DeleteImageAsync(dockerImageName, new ImageDeleteParameters { Force = true}));
             }
             catch (Exception e)
             {

@@ -18,17 +18,17 @@ namespace TestContainers.Containers.StartupStrategies
                        iteration => TimeSpan.FromSeconds(1),
                        (exception, timespan) => Console.WriteLine("hjhj")));
 
-        public async Task<bool> WaitUntilStartupSuccessful(IDockerClient dockerClient, string containerId)
+        public async Task<bool> WaitUntilStartupSuccessful(string containerId)
         {
-            return (await p.ExecuteAsync(async () => await CheckStartupState(dockerClient, containerId))) == StartupStatus.Successful;
+            return (await p.ExecuteAsync(async () => await CheckStartupState(containerId))) == StartupStatus.Successful;
         }
 
-        public abstract Task<StartupStatus> CheckStartupState(IDockerClient dockerClient, string containerId);
+        public abstract Task<StartupStatus> CheckStartupState(string containerId);
 
 
-        protected async Task<ContainerState> GetCurrentState(IDockerClient dockerClient, string containerId)
+        protected async Task<ContainerState> GetCurrentState(string containerId)
         {
-            return (await dockerClient.Containers.InspectContainerAsync(containerId)).State;
+            return (await DockerClientFactory.Instance.Execute(c=>c.Containers.InspectContainerAsync(containerId))).State;
         }
         public enum StartupStatus
         {

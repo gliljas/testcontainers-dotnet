@@ -87,7 +87,7 @@ namespace TestContainers.Tests.Containers
                 Assert.NotEqual(
 
                         firstId,
-                        (await DockerClientFactory.Instance.Client().Networks.InspectNetworkAsync(network.Id)).ID//"New network created",
+                        (await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(network.Id))).ID//"New network created",
                 );
             }
         }

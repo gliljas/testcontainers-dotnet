@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Docker.DotNet.Models;
 using TestContainers.Containers;
 using TestContainers.Containers.Mounts;
 using TestContainers.Containers.StartupStrategies;
@@ -64,6 +65,8 @@ namespace TestContainers.Core.Containers
         public ContainerBuilder<T> WithStartupCheckStrategy(IStartupCheckStrategy strategy) => this;
 
         public ContainerBuilder<T> WithWorkingDirectory(string workingDirectory) => this;
+
+        public ContainerBuilder<T> WithCreateContainerCmdModifier(Action<CreateContainerParameters> modifier) => this;
         public T Build()
         {
             return default;

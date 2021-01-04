@@ -60,7 +60,7 @@ namespace TestContainers
 
         IReadOnlyList<IBind> GetBinds();
 
-        IDockerClient GetDockerClient();
+        //IDockerClient GetDockerClient();
 
         void SetExposedPorts(List<int> exposedPorts);
 

@@ -13,7 +13,6 @@ namespace TestContainers.Images
         private DockerImageName _dockerImageName;
         private Task<DockerImageName> _dockerImageNameTask;
         private IImagePullPolicy _imagePullPolicy;
-        private IDockerClient _dockerClient = DockerClientFactory.LazyClient;
         private ILogger _logger;
 
         public RemoteDockerImage(DockerImageName dockerImageName)
@@ -52,12 +51,12 @@ namespace TestContainers.Images
                     try
                     {
                         //
-                        await _dockerClient.Images.CreateImageAsync(
+                        await DockerClientFactory.Instance.Execute(c=>c.Images.CreateImageAsync(
                                 new ImagesCreateParameters { FromImage = imageName.UnversionedPart, Tag = imageName.VersionPart },
                                 null,
                                 null,
                                 cancellationToken
-                            );
+                            ));
 
                         LocalImagesCache.Instance.RefreshCache(imageName);
 

@@ -17,7 +17,7 @@ namespace TestContainers
 
         protected override bool IsApplicable() => EnvironmentHelper.IsWindows();
 
-        protected override string GetDescription() => "Docker for Windows (via named pipes)";
+        protected override string Description => "Docker for Windows (via named pipes)";
 
     }
 }

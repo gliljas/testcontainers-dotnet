@@ -8,7 +8,7 @@ namespace TestContainers.Containers.StartupStrategies
 {
     public class IsRunningStartupCheckStrategy : AbstractStartupCheckStrategy
     {
-        public override Task<StartupStatus> CheckStartupState(IDockerClient dockerClient, string containerId)
+        public override Task<StartupStatus> CheckStartupState(string containerId)
         {
             throw new NotImplementedException();
         }

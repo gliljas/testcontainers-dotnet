@@ -204,7 +204,7 @@ namespace TestContainers.Core.Containers
 
                 if (!reused)
                 {
-                    var createResponse = await DockerClientFactory.Execute(c=>c.Containers.CreateContainerAsync(createCommand, cancellationToken));
+                    var createResponse = await DockerClientFactory.Instance.Execute(c=>c.Containers.CreateContainerAsync(createCommand, cancellationToken));
 
                     _containerId = createResponse.ID;
 
@@ -220,7 +220,7 @@ namespace TestContainers.Core.Containers
 
                     _logger.LogInformation("Starting container with ID: {containerId}", _containerId);
 
-                    await DockerClientFactory.Execute(c=>c.Containers.StartContainerAsync(_containerId, new ContainerStartParameters(), cancellationToken));
+                    await DockerClientFactory.Instance.Execute(c=>c.Containers.StartContainerAsync(_containerId, new ContainerStartParameters(), cancellationToken));
                 }
 
                 _logger.LogInformation("Container {} is starting: {}", dockerImageName, _containerId);
@@ -229,11 +229,11 @@ namespace TestContainers.Core.Containers
                 //this.logConsumers.forEach(this::followOutput);
 
                 // Tell subclasses that we're starting
-                _containerInfo = await DockerClientFactory.Execute(c=>c.Containers.InspectContainerAsync(_containerId));
+                _containerInfo = await DockerClientFactory.Instance.Execute(c=>c.Containers.InspectContainerAsync(_containerId));
                 await ContainerIsStarting(_containerInfo, reused);
 
                 // Wait until the container has reached the desired running state
-                if (!await _startupCheckStrategy.WaitUntilStartupSuccessful(_dockerClient, _containerId))
+                if (!await _startupCheckStrategy.WaitUntilStartupSuccessful(_containerId))
                 {
                     // Bail out, don't wait for the port to start listening.
                     // (Exception thrown here will be caught below and wrapped)
@@ -251,7 +251,7 @@ namespace TestContainers.Core.Containers
                     ContainerInspectResponse inspectContainerResponse = null;
                     try
                     {
-                        inspectContainerResponse = await _dockerClient.Containers.InspectContainerAsync(_containerId);
+                        inspectContainerResponse = await DockerClientFactory.Instance.Execute(c=>c.Containers.InspectContainerAsync(_containerId));
                     }
                     catch (DockerContainerNotFoundException notFoundException)
                     {

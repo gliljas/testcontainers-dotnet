@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
+using Docker.DotNet.Models;
+using Microsoft.Extensions.Logging;
 using TestContainers.Containers;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
@@ -11,30 +14,30 @@ using Xunit;
 
 namespace TestContainers.Tests.Containers
 {
-    class GenericContainerTest
+    public class GenericContainerTest
     {
         [Fact]
         public async Task ShouldReportOOMAfterWait()
         {
-            var info = await DockerClientFactory.Instance.Client().System.GetSystemInfoAsync();// ;/.infoCmd().exec();
+            var info = await DockerClientFactory.Instance.Execute(c => c.System.GetSystemInfoAsync());// ;/.infoCmd().exec();
             // Poor man's rootless Docker detection :D
             Assert.DoesNotContain("vfs", info.Driver);
             //Assumptions.assumeThat(info.getDriver()).doesNotContain("vfs");
             await using (
-                GenericContainer container = new GenericContainer(TestImages.TINY_IMAGE)
+                var container = new ContainerBuilder<GenericContainer>(TestImages.TINY_IMAGE)
                     .WithStartupCheckStrategy(new NoopStartupCheckStrategy())
-                    .WaitingFor(new WaitForExitedState(ContainerState::getOOMKilled))
-                    .WithCreateContainerCmdModifier(it-> {
-                it.getHostConfig()
-                    .withMemory(20 * FileUtils.ONE_MB)
-                    .withMemorySwappiness(0L)
-                    .withMemorySwap(0L)
-                    .withMemoryReservation(0L)
-                    .withKernelMemory(16 * FileUtils.ONE_MB);
-            })
-                .WithCommand("sh", "-c", "A='0123456789'; for i in $(seq 0 32); do A=$A$A; done; sleep 10m")
+                    .WaitingFor(new WaitForExitedState(state => state.OOMKilled))
+                    .WithCreateContainerCmdModifier(it=> {
+                        it.HostConfig.Memory = 20 * 1024 * 1024;// FileUtils.ONE_MB;
+                        it.HostConfig.MemorySwappiness = 0L;
+                        it.HostConfig.MemorySwap = 0L;
+                        it.HostConfig.MemoryReservation = 0L;
+                        it.HostConfig.KernelMemory = 16 * 1024 * 1024;// FileUtils.ONE_MB;
+                    })
+                    .WithCommand("sh", "-c", "A='0123456789'; for i in $(seq 0 32); do A=$A$A; done; sleep 10m")
+                    .Build()
             ) {
-                var ex = await Assert.ThrowsAsync(() => container.Start());
+                var ex = await Assert.ThrowsAsync<Exception>(() => container.Start());
                 Assert.Contains("Container crashed with out-of-memory", ex.StackTrace);
             }
         }
@@ -43,21 +46,22 @@ namespace TestContainers.Tests.Containers
         public async Task ShouldReportErrorAfterWait()
         {
             await using (
-                var container = new GenericContainer(TestImages.TINY_IMAGE)
+                var container = new ContainerBuilder<GenericContainer>(TestImages.TINY_IMAGE)
                     .WithStartupCheckStrategy(new NoopStartupCheckStrategy())
-                    .WaitingFor(new WaitForExitedState(state->state.getExitCode() > 0))
+                    .WaitingFor(new WaitForExitedState(state => state.ExitCode > 0))
                     .WithCommand("sh", "-c", "usleep 100; exit 123")
+                    .Build()
 
             )
             {
-                var ex = await Assert.ThrowsAsync(() => container.Start());
+                var ex = await Assert.ThrowsAsync<Exception>(async () => await container.Start());
                 Assert.Contains("Container exited with code 123", ex.StackTrace);
             }
         }
 
         private class NoopStartupCheckStrategy : AbstractStartupCheckStrategy
         {
-            public override Task<StartupStatus> CheckStartupState(IDockerClient dockerClient, string containerId)
+            public override Task<StartupStatus> CheckStartupState(string containerId)
             {
                 return Task.FromResult(StartupStatus.Successful);
             }
@@ -65,24 +69,34 @@ namespace TestContainers.Tests.Containers
 
         private class WaitForExitedState : AbstractWaitStrategy
         {
-
-            Predicate<IContainerState> _predicate;
-
-            protected override void WaitUntilReady()
+            private ILogger _logger;
+            public WaitForExitedState(Predicate<ContainerState> predicate)
             {
-                Unreliables.retryUntilTrue(5, TimeUnit.SECONDS, ()-> {
-                    ContainerState state = waitStrategyTarget.getCurrentContainerInfo().getState();
+                _predicate = predicate;
+            }
 
-                    _logger.Debug("Current state: {}", state);
-                    if (!"exited".equalsIgnoreCase(state.getStatus()))
-                    {
-                        Thread.sleep(100);
-                        return false;
-                    }
-                    return predicate.test(state);
-                });
+            Predicate<ContainerState> _predicate;
+
+            public override async Task WaitUntilReady(IWaitStrategyTarget target, CancellationToken cancellationToken = default)
+            {
+                //Unreliables.retryUntilTrue(5, TimeUnit.SECONDS, async ()=> {
+                var state = (await target.GetCurrentContainerInfo(cancellationToken)).State;
+
+                _logger.LogDebug("Current state: {state}", state);
+                if (!"exited".Equals(state.Status, StringComparison.OrdinalIgnoreCase))
+                {
+                    await Task.Delay(100);
+                    return false;
+                }
+                return _predicate(state);
+                //                });
 
                 throw new IllegalStateException("Nope!");
+            }
+
+            protected override Task WaitUntilReady(CancellationToken cancellationToken)
+            {
+                throw new NotImplementedException();
             }
         }
     }

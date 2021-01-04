@@ -13,7 +13,7 @@ namespace TestContainers
         static ILogger _logger;
         static volatile DockerClientFactory instance;
         static object syncRoot = new Object();
-        internal IDockerClient _dockerClient;
+        //internal IDockerClient _dockerClient;
         internal Exception _cachedClientFailure;
         public static readonly string TESTCONTAINERS_SESSION_ID_LABEL;
         public static readonly string TESTCONTAINERS_LABEL;
@@ -36,9 +36,6 @@ namespace TestContainers
             }
         }
 
-        public static IDockerClient LazyClient => LazyDockerClient.Instance;
-
-
         public async Task<T> Execute<T>(Func<IDockerClient, Task<T>> clientTask)
         {
             var client = await GetClient();
@@ -51,6 +48,11 @@ namespace TestContainers
         }
 
         private async Task<IDockerClient> GetClient()
+        {
+            throw new NotImplementedException();
+        }
+
+        internal Task CheckAndPullImage(string imageName)
         {
             throw new NotImplementedException();
         }

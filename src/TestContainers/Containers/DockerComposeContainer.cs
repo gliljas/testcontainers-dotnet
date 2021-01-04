@@ -218,7 +218,7 @@ namespace TestContainers.Containers
 
         private async Task FollowLogs(String containerId, IProgress<string> consumer)
         {
-            await LogUtils.FollowOutput(DockerClientFactory.Instance.Client(), containerId, consumer);
+            await LogUtils.FollowOutput(containerId, consumer);
         }
 
         private string GetServiceNameFromContainer(ContainerListResponse container)
@@ -244,7 +244,7 @@ namespace TestContainers.Containers
                 try
                 {
                     _logger.LogInformation("Preemptively checking local images for '{imageName}', referenced via a compose file or transitive Dockerfile. If not available, it will be pulled.", imageName);
-                    await DockerClientFactory.Instance.CheckAndPullImage(_dockerClient, imageName);
+                    await DockerClientFactory.Instance.CheckAndPullImage(imageName);
                 }
                 catch (Exception e)
                 {
@@ -383,7 +383,7 @@ namespace TestContainers.Containers
 
             AuditLogger.DoComposeLog(GetCommandParts(), GetEnv());
 
-            var exitCode = (await _dockerClient.Containers.InspectContainerAsync(ContainerId)).State?.ExitCode;
+            var exitCode = (await DockerClientFactory.Instance.Execute(c=>c.Containers.InspectContainerAsync(ContainerId))).State?.ExitCode;
 
             if (exitCode == null || exitCode != 0)
             {

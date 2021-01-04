@@ -66,7 +66,7 @@ namespace TestContainers.Containers
 
         }
 
-        public virtual string Host => DockerClientFactory.Instance.Client().GetDockerHostIpAddress();
+        public virtual string Host => null;// DockerClientFactory.Instance.Client().GetDockerHostIpAddress();
 
         public virtual Task<int> GetMappedPort(int originalPort, CancellationToken cancellationToken = default)
         {

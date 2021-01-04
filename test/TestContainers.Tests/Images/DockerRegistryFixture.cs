@@ -37,9 +37,9 @@ namespace TestContainers.Tests.Images
             // push the image to the registry
             await DockerClientFactory.Instance.Execute(c => c.Images.TagImageAsync(dummyImageId, new ImageTagParameters { Tag = tag }));
 
-            DockerClientFactory.Instance.Execute(c => c.Images.PushImageAsync(_imageName.AsCanonicalNameString())
-                .exec(new ResultCallback.Adapter<>())
-                .awaitCompletion(1, TimeUnit.MINUTES));
+            //DockerClientFactory.Instance.Execute(c => c.Images.PushImageAsync(_imageName.AsCanonicalNameString())
+            //    .exec(new ResultCallback.Adapter<>())
+            //    .awaitCompletion(1, TimeUnit.MINUTES));
         }
 
         public async Task RemoveImage()

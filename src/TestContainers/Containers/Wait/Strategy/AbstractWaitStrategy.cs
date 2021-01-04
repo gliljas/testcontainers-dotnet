@@ -12,7 +12,7 @@ namespace TestContainers.Containers.WaitStrategies
         protected internal TimeSpan _startupTimeout;
         protected IWaitStrategyTarget _waitStrategyTarget;
 
-        public Task WaitUntil(IDockerClient dockerClient, IContainer container, CancellationToken ct = default)
+        public Task WaitUntil(IContainer container, CancellationToken ct = default)
         {
             throw new NotImplementedException();
         }
