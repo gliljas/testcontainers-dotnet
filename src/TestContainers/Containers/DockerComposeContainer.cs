@@ -429,7 +429,7 @@ namespace TestContainers.Containers
         public static readonly string UNIX_PATH_SEPARATOR = ":";
         public static readonly DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.Parse("docker/compose:1.24.1");
 
-        public ContainerisedDockerCompose(IEnumerable<FileInfo> composeFiles, string identifier) : base(DEFAULT_IMAGE_NAME)
+        public ContainerisedDockerCompose(IEnumerable<FileInfo> composeFiles, string identifier) : base(DEFAULT_IMAGE_NAME,new ContainerOptions())
         {
 
             AddEnv(ENV_PROJECT_NAME, identifier);

@@ -21,7 +21,7 @@ namespace TestContainers.Utility
 
             //if ("UTF-8".Equals(Environment. System.getProperty("file.encoding")))
             //{
-                return _loggerFactory.CreateLogger("\uD83D\uDC33 [" + abbreviatedName + "]");
+                return StaticLoggerFactory.CreateLogger("\uD83D\uDC33 [" + abbreviatedName + "]");
             //}
             //else
             //{

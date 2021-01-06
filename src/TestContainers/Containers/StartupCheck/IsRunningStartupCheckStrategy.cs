@@ -8,9 +8,21 @@ namespace TestContainers.Containers.StartupStrategies
 {
     public class IsRunningStartupCheckStrategy : AbstractStartupCheckStrategy
     {
-        public override Task<StartupStatus> CheckStartupState(string containerId)
+        public override async Task<StartupStatus> CheckStartupState(string containerId)
         {
-            throw new NotImplementedException();
+            var state = await GetCurrentState(containerId);
+            if (state.Running)
+            {
+                return StartupStatus.Successful;
+            }
+            else if (!state.IsContainerExitCodeSuccess())
+            {
+                return StartupStatus.Failed;
+            }
+            else
+            {
+                return StartupStatus.NotYetKnown;
+            }
         }
     }
 }

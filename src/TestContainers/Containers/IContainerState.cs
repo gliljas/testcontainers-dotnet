@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet.Models;
 using TestContainers.Containers;
+using TestContainers.Utility;
 
 namespace TestContainers
 {
@@ -87,5 +88,8 @@ namespace TestContainers
             //log.trace("{}: stderr: {}", containerName, result.getStderr());
             return execResult;
         }
+
+
+        public static async Task<string> GetLogs(this IContainerState containerState) => await LogUtils.GetOutput(containerState.ContainerId);
     }
 }

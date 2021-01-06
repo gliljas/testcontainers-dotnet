@@ -15,14 +15,25 @@ namespace TestContainers
 {
     public abstract class DockerClientProviderStrategy
     {
-        private static ILogger _logger;
+        
+
+
+
+
+        private static ILogger _logger = StaticLoggerFactory.CreateLogger(typeof(DockerClientProviderStrategy));
 
         private static bool FAIL_FAST_ALWAYS = false;
+
+
+        public DockerClientProviderStrategy()
+        {
+        //    _dockerClient = new Lazy<IDockerClient>(() => GetClientForConfig());
+        }
         protected abstract DockerClientConfiguration Config { get; }
         protected abstract bool IsApplicable();
-        protected abstract bool IsPersistable();
+        protected virtual bool IsPersistable() => true;
 
-       
+
         public static async Task<DockerClientProviderStrategy> GetFirstValidStrategy(IEnumerable<DockerClientProviderStrategy> strategies)
         {
             if (FAIL_FAST_ALWAYS)
@@ -33,7 +44,7 @@ namespace TestContainers
             var configurationFailures = new List<string>();
 
             var foundStrategy = Enumerable.Concat<DockerClientProviderStrategy>(
-                            new[] { TestContainersConfiguration.Instance.DockerClientStrategyClassName }
+                            new[] { TestContainersConfiguration.Instance?.DockerClientStrategyClassName }
                             .Where(x => !string.IsNullOrEmpty(x))
                             .Select(x =>
                             {
@@ -81,7 +92,10 @@ namespace TestContainers
                         var p = Policy
                             .TimeoutAsync(30)
                             .WrapAsync<SystemInfoResponse>(
-                                Policy<SystemInfoResponse>.Handle<Exception>().RetryForeverAsync());
+                                Policy<SystemInfoResponse>.Handle<Exception>().RetryForeverAsync(x =>
+                                {
+                                    _logger.LogTrace(x.Exception, "Retrying");
+                                }));
 
                         info = await p.ExecuteAsync(() =>
                         {
@@ -100,7 +114,7 @@ namespace TestContainers
                     _logger.LogDebug(
                         "Transport type: '{type}', Docker host: '{host}'",
                         TestContainersConfiguration.Instance.TransportType,
-                        strategy.TransportConfig.DockerHost
+                        strategy.TransportConfig?.DockerHost
                     );
 
                     _logger.LogDebug("Checking Docker OS type for {description}", strategy.Description);
@@ -162,7 +176,33 @@ namespace TestContainers
             throw new IllegalStateException("Could not find a valid Docker environment. Please see logs and check configuration");
         }
 
-        protected abstract IDockerClient GetDockerClient();
+        public virtual IDockerClient GetDockerClient() => GetClientForConfig();
+
+        private IDockerClient GetClientForConfig()
+        {
+            //var DockerHttpClient dockerHttpClient;
+
+            //String transportType = TestcontainersConfiguration.getInstance().getTransportType();
+            //switch (transportType)
+            //{
+            //    case "okhttp":
+            //        dockerHttpClient = new OkDockerHttpClient.Builder()
+            //            .dockerHost(transportConfig.getDockerHost())
+            //            .sslConfig(transportConfig.getSslConfig())
+            //            .build();
+            //        break;
+            //    case "httpclient5":
+            //        dockerHttpClient = new ZerodepDockerHttpClient.Builder()
+            //            .dockerHost(transportConfig.getDockerHost())
+            //            .sslConfig(transportConfig.getSslConfig())
+            //            .build();
+            //        break;
+            //    default:
+            //        throw new IllegalArgumentException("Unknown transport type '" + transportType + "'");
+            //}
+
+            return Config.CreateClient();
+        }
 
         //Assembly.Load("TestContainers")
         //    .GetTypes()
@@ -170,10 +210,8 @@ namespace TestContainers
         //    .Select(type => (Activator.CreateInstance(type) as DockerClientProviderStrategy))
         //    .SingleOrDefault(strategy => strategy.IsApplicable());
 
-        public IDockerClient GetClient() => Config.CreateClient();
-
         protected abstract int Priority { get; }
-        protected abstract string Description { get;}
+        protected abstract string Description { get; }
         public TransportConfig TransportConfig { get; private set; }
     }
 }

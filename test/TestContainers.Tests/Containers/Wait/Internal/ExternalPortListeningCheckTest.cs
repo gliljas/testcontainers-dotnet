@@ -38,19 +38,19 @@ namespace TestContainers.Tests.Containers.Wait.Internal
 
             var check = new ExternalPortListeningCheck(_mockContainer, new List<int> { ((IPEndPoint) _listeningSocket1.LocalEndpoint).Port });
 
-            var result = check.Check();
+            var result = check.Invoke();
 
             Assert.True(result, "ExternalPortListeningCheck identifies a single listening port");
         }
 
 
         [Fact]
-        public void multipleListening()
+        public void MultipleListening()
         {
 
             var check = new ExternalPortListeningCheck(_mockContainer, new List<int> { ((IPEndPoint) _listeningSocket1.LocalEndpoint).Port, ((IPEndPoint) _listeningSocket2.LocalEndpoint).Port });
 
-            var result = check.Check();
+            var result = check.Invoke();
 
             Assert.True(result, "ExternalPortListeningCheck identifies multiple listening port");
         }
@@ -61,12 +61,12 @@ namespace TestContainers.Tests.Containers.Wait.Internal
 
             var check = new ExternalPortListeningCheck(_mockContainer, new List<int> { ((IPEndPoint) _listeningSocket1.LocalEndpoint).Port, ((IPEndPoint) _nonListeningSocket.LocalEndpoint).Port });
 
-            Assert.Throws<IllegalStateException>(() => check.Check()); // "ExternalPortListeningCheck detects a non-listening port among many"
+            Assert.Throws<IllegalStateException>(() => check.Invoke()); // "ExternalPortListeningCheck detects a non-listening port among many"
         }
 
         public void Dispose()
         {
-            _listeningSocket2.Stop();
+            _listeningSocket1.Stop();
             _listeningSocket2.Stop();
         }
     }

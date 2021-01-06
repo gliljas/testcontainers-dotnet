@@ -15,7 +15,7 @@ namespace TestContainers.Containers
 
         }
 
-        public SocatContainer(DockerImageName dockerImageName) : base(dockerImageName)
+        public SocatContainer(DockerImageName dockerImageName) : base(dockerImageName, new ContainerOptions())
         {
             //WithCreateContainerCmdModifier(it=>it.WithEntrypoint("/bin/sh"));
             //WithCreateContainerCmdModifier(it=>it.WithName("testcontainers-socat-" + Base58.RandomString(8)));

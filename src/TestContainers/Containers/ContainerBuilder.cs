@@ -11,13 +11,14 @@ using TestContainers.Images;
 
 namespace TestContainers.Core.Containers
 {
-    public class ContainerBuilder<T> where T : IContainer
+    public class ContainerBuilder<T> where T : GenericContainer
     {
         private ContainerOptions _options = new ContainerOptions();
+        private readonly DockerImageName _dockerImage;
 
         public ContainerBuilder(DockerImageName dockerImage) : this(Task.FromResult(dockerImage))
         {
-
+            _dockerImage = dockerImage;
         }
 
         public ContainerBuilder(Task<DockerImageName> dockerImage)
@@ -29,7 +30,7 @@ namespace TestContainers.Core.Containers
             optionAction(_options);
             return this;
         }
-        public ContainerBuilder<T> WaitingFor(IWaitStrategy waitStrategy) => SetOptionAndReturnSelf(o => o.WaitingFor(waitStrategy));
+        public ContainerBuilder<T> WaitingFor(IWaitStrategy waitStrategy) => SetOptionAndReturnSelf(o => o.WaitStrategy = waitStrategy);
 
         public ContainerBuilder<T> WithFileSystemBind(string hostPath, string containerPath) => this;
 
@@ -48,7 +49,9 @@ namespace TestContainers.Core.Containers
         public ContainerBuilder<T> WithLabel(string key, string value) => SetOptionAndReturnSelf(o => { });
         public ContainerBuilder<T> WithLabels(IDictionary<string, string> labels) => SetOptionAndReturnSelf(o => { });
 
-        public ContainerBuilder<T> WithCommand(params string[] commandParts) => this;
+
+        public ContainerBuilder<T> WithCommand(string command) => SetOptionAndReturnSelf(o => o.CommandParts = command.Split(' '));
+        public ContainerBuilder<T> WithCommand(params string[] commandParts) => SetOptionAndReturnSelf(o => o.CommandParts = commandParts);
 
         public ContainerBuilder<T> WithExtraHost(string hostname, string ipAddress) => this;
 
@@ -68,25 +71,27 @@ namespace TestContainers.Core.Containers
 
         public ContainerBuilder<T> WithMinimumRunningDuration(TimeSpan minimumRunningDuration) => this;
 
-        public ContainerBuilder<T> WithStartupCheckStrategy(IStartupCheckStrategy strategy) => this;
+        public ContainerBuilder<T> WithStartupCheckStrategy(IStartupCheckStrategy strategy) => SetOptionAndReturnSelf(x => x.StartupCheckStrategy = strategy); 
 
         public ContainerBuilder<T> WithWorkingDirectory(string workingDirectory) => this;
 
-        public ContainerBuilder<T> WithCreateContainerCmdModifier(Action<CreateContainerParameters> modifier) => this;
+        public ContainerBuilder<T> WithCreateContainerCmdModifier(Action<CreateContainerParameters> modifier) => SetOptionAndReturnSelf(x => x.CreateContainerParametersModifiers.Add(modifier));
 
         public ContainerBuilder<T> WithLogConsumer(IProgress<string> consumer) => this;
         public T Build()
         {
-            return default;
+            return Activator.CreateInstance(typeof(T), _dockerImage, _options) as T;
         }
     }
 
     public class ContainerOptions
     {
-        internal void WaitingFor(IWaitStrategy waitStrategy)
-        {
-            throw new NotImplementedException();
-        }
+        public IWaitStrategy WaitStrategy { get; internal set; }
+        public IStartupCheckStrategy StartupCheckStrategy { get; internal set; } 
+        public List<Action<CreateContainerParameters>> CreateContainerParametersModifiers { get; internal set; } = new List<Action<CreateContainerParameters>>();
+        public string[] CommandParts { get; internal set; }
+        public Dictionary<string, string> Env { get; internal set; } = new Dictionary<string, string>();
+        public long? ShmSize { get; internal set; }
     }
 
     public class DockerComposeContainerBuilder  : IBuilder<DockerComposeContainer>

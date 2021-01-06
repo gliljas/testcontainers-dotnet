@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace TestContainers.Containers.WaitStrategies
 {
@@ -14,9 +16,33 @@ namespace TestContainers.Containers.WaitStrategies
             this.externalLivenessCheckPorts = externalLivenessCheckPorts;
         }
 
-        internal bool Check()
+        internal bool Invoke()
         {
-            throw new NotImplementedException();
+            var address = _waitStrategyTarget.Host;
+
+            Parallel.ForEach(externalLivenessCheckPorts, externalPort  => {
+                try
+                {
+                    var tc = new TcpClient();
+                    try
+                    {
+
+                        tc.Connect(address, externalPort);
+                        bool stat = tc.Connected;
+                        tc.Close();
+                    }
+                    finally
+                    {
+                        tc.Close();
+                    }
+                }
+                catch 
+                {
+                    throw new IllegalStateException("Socket not listening yet: " + externalPort);
+                }
+
+            });
+            return true;
         }
     }
 }

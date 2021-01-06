@@ -2,9 +2,11 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Docker.DotNet;
 using Microsoft.Extensions.Logging;
+using TestContainers.DockerClient;
 
 namespace TestContainers
 {
@@ -15,8 +17,10 @@ namespace TestContainers
         static object syncRoot = new Object();
         //internal IDockerClient _dockerClient;
         internal Exception _cachedClientFailure;
-        public static readonly string TESTCONTAINERS_SESSION_ID_LABEL;
-        public static readonly string TESTCONTAINERS_LABEL;
+        internal IDockerClient _dockerClient;
+        private Task<DockerClientProviderStrategy> _strategy;
+        public static readonly string TESTCONTAINERS_LABEL=typeof(DockerClientFactory).Assembly.GetName().Name;
+        public static readonly string TESTCONTAINERS_SESSION_ID_LABEL = TESTCONTAINERS_LABEL + ".sessionid";
         public static readonly string SESSION_ID = Guid.NewGuid().ToString("N");
 
         //DockerClientProviderStrategy strategy { get; } = DockerClientProviderStrategy.GetFirstValidStrategy();
@@ -47,9 +51,61 @@ namespace TestContainers
             await clientTask.Invoke(client);
         }
 
-        private async Task<IDockerClient> GetClient()
+        internal class DiskSpaceUsage
         {
-            throw new NotImplementedException();
+            public long? AvailableMB { get; set; }
+            public long? UsedPercent { get; set; }
+        }
+
+        internal DiskSpaceUsage ParseAvailableDiskSpace(string dfOutput)
+        {
+            var df = new DiskSpaceUsage();
+            var lines = dfOutput.Split('\n');
+            foreach (var line in lines)
+            {
+                var fields = Regex.Split(line, "\\s+");
+                if (fields.Length > 5 && fields[5].Equals("/"))
+                {
+                    if (long.TryParse(fields[3], out var availableKB))
+                    {
+                        df.AvailableMB = availableKB / 1024L;
+                    }
+                    if (int.TryParse(fields[4].Replace("%", ""), out var percent))
+                    {
+                        df.UsedPercent = percent;
+                    }
+                    break;
+                }
+            }
+            return df;
+        }
+
+        internal async Task<IDockerClient> GetClient()
+        {
+            var strategy = await GetOrInitializeStrategy();
+            return strategy.GetDockerClient();
+        }
+
+        private Task<DockerClientProviderStrategy> GetOrInitializeStrategy()
+        {
+            if (_strategy != null)
+            {
+                return _strategy;
+            }
+
+
+            var configurationStrategies = new DockerClientProviderStrategy[] {
+                new UnixSocketClientProviderStrategy(),
+                new NpipeSocketClientProviderStrategy(),
+                new EnvironmentAndSystemPropertyClientProviderStrategy()
+            };
+
+            //List<DockerClientProviderStrategy> configurationStrategies = new ArrayList<>();
+            //ServiceLoader.load(DockerClientProviderStrategy.class).forEach(configurationStrategies::add);
+
+            _strategy = DockerClientProviderStrategy.GetFirstValidStrategy(configurationStrategies);
+
+            return _strategy;
         }
 
         internal Task CheckAndPullImage(string imageName)

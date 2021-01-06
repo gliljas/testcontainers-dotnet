@@ -98,7 +98,7 @@ namespace TestContainers.Containers.WaitStrategies
             }
 
             _timeout = startupTimeout;
-            //_strategies.forEach(this::applyStartupTimeout);
+            _strategies.ForEach(x=>x.WithStartupTimeout(startupTimeout));
             return this;
         }
 

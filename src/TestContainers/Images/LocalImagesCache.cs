@@ -15,8 +15,8 @@ namespace TestContainers.Images
         private ILogger _logger;
         private bool _initialized;
 
-        public static LocalImagesCache Instance { get; internal set; }
-        public ConcurrentDictionary<DockerImageName, ImageData> Cache { get; internal set; }
+        public static LocalImagesCache Instance { get; internal set; } = new LocalImagesCache();
+        public ConcurrentDictionary<DockerImageName, ImageData> Cache { get; internal set; } = new ConcurrentDictionary<DockerImageName, ImageData>();
 
         internal async Task<ImageData> RefreshCache(DockerImageName imageName)
         {
@@ -90,7 +90,7 @@ namespace TestContainers.Images
 
         internal ImageData Get(DockerImageName imageName)
         {
-            throw new NotImplementedException();
+            return Cache.TryGetValue(imageName, out var value) ? value : null;
         }
     }
 }

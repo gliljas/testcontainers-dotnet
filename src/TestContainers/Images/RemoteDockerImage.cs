@@ -12,8 +12,8 @@ namespace TestContainers.Images
         private readonly TimeSpan PULL_RETRY_TIME_LIMIT = TimeSpan.FromMinutes(2);
         private DockerImageName _dockerImageName;
         private Task<DockerImageName> _dockerImageNameTask;
-        private IImagePullPolicy _imagePullPolicy;
-        private ILogger _logger;
+        private IImagePullPolicy _imagePullPolicy = PullPolicy.DefaultPolicy();
+        private ILogger _logger = StaticLoggerFactory.CreateLogger<RemoteDockerImage>();
 
         public RemoteDockerImage(DockerImageName dockerImageName)
         {
@@ -53,8 +53,8 @@ namespace TestContainers.Images
                         //
                         await DockerClientFactory.Instance.Execute(c=>c.Images.CreateImageAsync(
                                 new ImagesCreateParameters { FromImage = imageName.UnversionedPart, Tag = imageName.VersionPart },
-                                null,
-                                null,
+                                new AuthConfig(),
+                                new Progress<JSONMessage>(m=>Console.WriteLine(m.ProgressMessage)),
                                 cancellationToken
                             ));
 

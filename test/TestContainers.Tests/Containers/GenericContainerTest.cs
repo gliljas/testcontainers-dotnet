@@ -38,8 +38,8 @@ namespace TestContainers.Tests.Containers
                     .WithCommand("sh", "-c", "A='0123456789'; for i in $(seq 0 32); do A=$A$A; done; sleep 10m")
                     .Build()
             ) {
-                var ex = await Assert.ThrowsAsync<Exception>(() => container.Start());
-                Assert.Contains("Container crashed with out-of-memory", ex.StackTrace);
+                var ex = await Assert.ThrowsAnyAsync<Exception>(() => container.Start());
+                Assert.Contains("Container crashed with out-of-memory", ex.ToString());
             }
         }
 
@@ -55,8 +55,8 @@ namespace TestContainers.Tests.Containers
 
             )
             {
-                var ex = await Assert.ThrowsAsync<Exception>(async () => await container.Start());
-                Assert.Contains("Container exited with code 123", ex.StackTrace);
+                var ex = await Assert.ThrowsAnyAsync<Exception>(async () => await container.Start());
+                Assert.Contains("Container exited with code 123", ex.ToString());
             }
         }
 

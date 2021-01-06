@@ -32,12 +32,13 @@ namespace TestContainers.Core.Containers
 #endif
     {
         private IStartupCheckStrategy _startupCheckStrategy = new IsRunningStartupCheckStrategy();
-        private ILogger _logger = null;
+        private ILogger _logger = StaticLoggerFactory.CreateLogger(typeof(GenericContainer));
         private string _containerId;
         private ContainerInspectResponse _containerInfo;
         private RemoteDockerImage _image;
+        private readonly ContainerOptions _containerOptions;
 
-        protected IWaitStrategy WaitStrategy => Wait.DefaultWaitStrategy();
+        protected IWaitStrategy WaitStrategy { get; private set; } = Wait.DefaultWaitStrategy();
 
         public override ContainerInspectResponse ContainerInfo => _containerInfo;
 
@@ -70,23 +71,27 @@ namespace TestContainers.Core.Containers
         //public bool PrivilegedMode { get; internal set; }
         //public string ImageName { get; internal set; }
 
-        public GenericContainer(DockerImageName dockerImageName) : this(new RemoteDockerImage(dockerImageName))
+
+
+        public GenericContainer(DockerImageName dockerImageName, ContainerOptions containerOptions) : this(new RemoteDockerImage(dockerImageName), containerOptions)
         {
         }
-        public GenericContainer(RemoteDockerImage image)
+
+        private GenericContainer(RemoteDockerImage image, ContainerOptions containerOptions)
         {
             _image = image;
+            _containerOptions = containerOptions;
         }
 
-        public GenericContainer(string dockerImageName)
-        {
-            SetDockerImageName(dockerImageName);
-        }
+        //public GenericContainer(string dockerImageName)
+        //{
+        //    SetDockerImageName(dockerImageName);
+        //}
 
-        public void SetDockerImageName(string dockerImageName)
-        {
-            _image = new RemoteDockerImage(dockerImageName);
-        }
+        //public void SetDockerImageName(string dockerImageName)
+        //{
+        //    _image = new RemoteDockerImage(dockerImageName);
+        //}
 
         //override 
 
@@ -141,7 +146,17 @@ namespace TestContainers.Core.Containers
         {
             try
             {
-                var dockerImageName = ImageName;
+                if (_containerOptions.StartupCheckStrategy != null)
+                {
+                    _startupCheckStrategy = _containerOptions.StartupCheckStrategy;
+                }
+
+                if (_containerOptions.WaitStrategy != null)
+                {
+                    WaitStrategy = _containerOptions.WaitStrategy;
+                }
+
+                var dockerImageName = await _image.Resolve(cancellationToken); ;
                 _logger.LogDebug("Starting container: {dockerImageName}", dockerImageName);
 
                 _logger.LogInformation("Creating container for image: {dockerImageName}", dockerImageName);
@@ -150,6 +165,7 @@ namespace TestContainers.Core.Containers
 
                 ApplyConfiguration(createCommand);
 
+                createCommand.Labels = createCommand.Labels ?? new Dictionary<string, string>();
                 createCommand.Labels[DockerClientFactory.TESTCONTAINERS_LABEL] = "true";
 
                 var reused = false;
@@ -206,7 +222,7 @@ namespace TestContainers.Core.Containers
 
                 if (!reused)
                 {
-                    var createResponse = await DockerClientFactory.Instance.Execute(c=>c.Containers.CreateContainerAsync(createCommand, cancellationToken));
+                    var createResponse = await DockerClientFactory.Instance.Execute(c => c.Containers.CreateContainerAsync(createCommand, cancellationToken));
 
                     _containerId = createResponse.ID;
 
@@ -222,7 +238,7 @@ namespace TestContainers.Core.Containers
 
                     _logger.LogInformation("Starting container with ID: {containerId}", _containerId);
 
-                    await DockerClientFactory.Instance.Execute(c=>c.Containers.StartContainerAsync(_containerId, new ContainerStartParameters(), cancellationToken));
+                    await DockerClientFactory.Instance.Execute(c => c.Containers.StartContainerAsync(_containerId, new ContainerStartParameters(), cancellationToken));
                 }
 
                 _logger.LogInformation("Container {} is starting: {}", dockerImageName, _containerId);
@@ -231,7 +247,7 @@ namespace TestContainers.Core.Containers
                 //this.logConsumers.forEach(this::followOutput);
 
                 // Tell subclasses that we're starting
-                _containerInfo = await DockerClientFactory.Instance.Execute(c=>c.Containers.InspectContainerAsync(_containerId));
+                _containerInfo = await DockerClientFactory.Instance.Execute(c => c.Containers.InspectContainerAsync(_containerId));
                 await ContainerIsStarting(_containerInfo, reused);
 
                 // Wait until the container has reached the desired running state
@@ -253,7 +269,7 @@ namespace TestContainers.Core.Containers
                     ContainerInspectResponse inspectContainerResponse = null;
                     try
                     {
-                        inspectContainerResponse = await DockerClientFactory.Instance.Execute(c=>c.Containers.InspectContainerAsync(_containerId));
+                        inspectContainerResponse = await DockerClientFactory.Instance.Execute(c => c.Containers.InspectContainerAsync(_containerId));
                     }
                     catch (DockerContainerNotFoundException notFoundException)
                     {
@@ -304,7 +320,7 @@ namespace TestContainers.Core.Containers
                 if (_containerId != null)
                 {
                     // Log output if startup failed, either due to a container failure or exception (including timeout)
-                    string containerLogs = await GetLogs();
+                    string containerLogs = await this.GetLogs();
 
                     if (containerLogs.Length > 0)
                     {
@@ -353,21 +369,39 @@ namespace TestContainers.Core.Containers
         {
             createCommand.HostConfig = BuildHostConfig();
 
-            //createCommand.ExposedPorts = _ex
+            //createCommand.ExposedPorts = _containerOptions.ExposedPorts.Select(x=>new ExposedPort(x)).
 
             //createCommand.p
+            //createCommand.p
 
+            if (_containerOptions.CommandParts != null)
+            {
+                createCommand.Cmd = _containerOptions.CommandParts;
+            }
+
+            createCommand.Env = _containerOptions.Env.Where(x => x.Value != null).Select(x => $"{x.Key}={x.Value}").ToList();
+
+            _containerOptions.CreateContainerParametersModifiers.ForEach(x => x(createCommand));
         }
 
         private HostConfig BuildHostConfig()
         {
-            throw new NotImplementedException();
+            var config = new HostConfig();
+            if (_containerOptions.ShmSize != null)
+            {
+                config.ShmSize = _containerOptions.ShmSize.Value;
+            }
+            //if (tmpFsMapping != null)
+            //{
+            //    config.Tmpfs(tmpFsMapping);
+            //}
+            return config;
         }
 
-        private Task<string> GetLogs()
-        {
-            throw new NotImplementedException();
-        }
+        //private Task<string> GetLogs()
+        //{
+        //    throw new NotImplementedException();
+        //}
 
 
         protected Task ContainerIsStarted(ContainerInspectResponse containerInfo)
@@ -440,7 +474,8 @@ namespace TestContainers.Core.Containers
 #if !NETSTANDARD2_0
         public ValueTask DisposeAsync()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            return new ValueTask();
         }
 #endif
 
@@ -613,4 +648,6 @@ namespace TestContainers.Core.Containers
         //    throw new NotImplementedException();
         //}
     }
+
+
 }

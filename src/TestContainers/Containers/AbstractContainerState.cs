@@ -48,9 +48,9 @@ namespace TestContainers.Containers
             throw new NotImplementedException();
         }
 
-        public virtual Task<ContainerInspectResponse> GetCurrentContainerInfo(CancellationToken cancellationToken)
+        public virtual async Task<ContainerInspectResponse> GetCurrentContainerInfo(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return await DockerClientFactory.Instance.Execute(c => c.Containers.InspectContainerAsync(ContainerId, cancellationToken));
         }
 
         public virtual Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken)

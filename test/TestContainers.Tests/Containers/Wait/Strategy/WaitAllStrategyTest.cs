@@ -13,14 +13,14 @@ namespace TestContainers.Tests.Containers.Wait.Strategy
 {
     public class WaitAllStrategyTest
     {
-        private GenericContainer _container;
+        private IWaitStrategyTarget _container;
         private IWaitStrategy _strategy1;
         private IWaitStrategy _strategy2;
         private IWaitStrategy _strategy3;
 
         public WaitAllStrategyTest()
         {
-            _container = Substitute.For<GenericContainer>();
+            _container = Substitute.For<IWaitStrategyTarget>();
             _strategy1 = Substitute.For<IWaitStrategy>();
             _strategy2 = Substitute.For<IWaitStrategy>();
             _strategy3 = Substitute.For<IWaitStrategy>();
@@ -94,7 +94,7 @@ namespace TestContainers.Tests.Containers.Wait.Strategy
 
             //_strategy1.WaitUntilReady(_container, Arg.Any<CancellationToken>());
 
-            _strategy1.WaitUntilReady(_container, Arg.Any<CancellationToken>()).Returns(x => throw new TimeoutException());
+            _strategy2.WaitUntilReady(_container, Arg.Any<CancellationToken>()).Returns(x => throw new TimeoutException());
 
             await Assert.ThrowsAsync<TimeoutException>(async () =>
             {
@@ -106,7 +106,10 @@ namespace TestContainers.Tests.Containers.Wait.Strategy
                 _strategy1.WaitUntilReady(Arg.Any<IWaitStrategyTarget>(), Arg.Any<CancellationToken>());
                 _strategy2.WaitUntilReady(Arg.Any<IWaitStrategyTarget>(), Arg.Any<CancellationToken>());
             });
-            _  = _strategy3.DidNotReceiveWithAnyArgs().WaitUntilReady(Arg.Any<IWaitStrategyTarget>(), Arg.Any<CancellationToken>());
+
+            _ = _strategy1.ReceivedWithAnyArgs().WaitUntilReady(Arg.Any<IWaitStrategyTarget>(), Arg.Any<CancellationToken>());
+            _ = _strategy2.ReceivedWithAnyArgs().WaitUntilReady(Arg.Any<IWaitStrategyTarget>(), Arg.Any<CancellationToken>());
+            _ = _strategy3.DidNotReceiveWithAnyArgs().WaitUntilReady(Arg.Any<IWaitStrategyTarget>(), Arg.Any<CancellationToken>());
         }
 
         [Fact]
