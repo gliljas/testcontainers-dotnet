@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace TestContainers
 {
     public interface INetwork
     {
-        string Id { get; }
+        string Name { get; }
+
+        Task<string> GetId();
     }
 }

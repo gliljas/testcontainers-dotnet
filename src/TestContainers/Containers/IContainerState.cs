@@ -91,5 +91,6 @@ namespace TestContainers
 
 
         public static async Task<string> GetLogs(this IContainerState containerState) => await LogUtils.GetOutput(containerState.ContainerId);
+        public static async Task<string> GetLogs(this IContainerState containerState, params OutputType[] outputTypes) => await LogUtils.GetOutput(containerState.ContainerId, outputTypes);
     }
 }

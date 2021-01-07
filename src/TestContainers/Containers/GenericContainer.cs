@@ -365,7 +365,7 @@ namespace TestContainers.Core.Containers
             throw new NotImplementedException();
         }
 
-        private void ApplyConfiguration(CreateContainerParameters createCommand)
+        private async Task ApplyConfiguration(CreateContainerParameters createCommand)
         {
             createCommand.HostConfig = BuildHostConfig();
 
@@ -381,6 +381,14 @@ namespace TestContainers.Core.Containers
 
             createCommand.Env = _containerOptions.Env.Where(x => x.Value != null).Select(x => $"{x.Key}={x.Value}").ToList();
 
+
+            if (_containerOptions.Network != null)
+            {
+                createCommand.NetworkingConfig = createCommand.NetworkingConfig ?? new NetworkingConfig();
+                createCommand.NetworkingConfig.EndpointsConfig = createCommand.NetworkingConfig.EndpointsConfig ?? new Dictionary<string, EndpointSettings>();
+                createCommand.NetworkingConfig.EndpointsConfig[await _containerOptions.Network.GetId()] = new EndpointSettings { Aliases = _containerOptions.NetworkAliases };
+            }
+      
             _containerOptions.CreateContainerParametersModifiers.ForEach(x => x(createCommand));
         }
 
@@ -437,9 +445,35 @@ namespace TestContainers.Core.Containers
             return Task.CompletedTask;
         }
 
-        public Task Stop()
+        public async Task Stop()
         {
-            throw new NotImplementedException();
+            if (_containerId == null)
+            {
+                return;
+            }
+
+            try
+            {
+                string imageName;
+
+                try
+                {
+                    imageName = ImageName;
+                }
+                catch (Exception e)
+                {
+                    imageName = "<unknown>";
+                }
+
+                await ContainerIsStopping(ContainerInfo);
+                await ResourceReaper.Instance.StopAndRemoveContainer(_containerId, imageName);
+                await ContainerIsStopped(ContainerInfo);
+            }
+            finally
+            {
+                _containerId = null;
+                _containerInfo = null;
+            }
         }
 
         public Task FollowOutput(IProgress<string> consumer)
@@ -457,6 +491,11 @@ namespace TestContainers.Core.Containers
             throw new NotImplementedException();
         }
 
+        public override Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<int>>(_containerOptions.ExposedPorts.AsReadOnly());
+        }
+
         protected ILogger Logger => DockerLoggerFactory.GetLogger(this.ImageName);
 
         public string TestHostIpAddress => throw new NotImplementedException();
@@ -472,10 +511,9 @@ namespace TestContainers.Core.Containers
         public IReadOnlyList<IBind> Binds => throw new NotImplementedException();
 
 #if !NETSTANDARD2_0
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            //throw new NotImplementedException();
-            return new ValueTask();
+            await Stop();
         }
 #endif
 

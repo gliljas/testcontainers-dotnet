@@ -13,7 +13,7 @@ namespace TestContainers.Images.Builder
         private readonly string _dockerImageName;
         private readonly bool _deleteOnExit;
         private Dictionary<string, ITransferable> _transferables = new Dictionary<string, ITransferable>();
-        private ILogger _logger;
+        private readonly ILogger _logger = StaticLoggerFactory.CreateLogger<ImageFromDockerfile>();
         public ImageFromDockerfile() : this("testcontainers/" + Base58.RandomString(16).ToLower())
         {
         }
@@ -46,7 +46,7 @@ namespace TestContainers.Images.Builder
             return this;
         }
 
-        public Task<DockerImageName> GetTask()
+        public Task<DockerImageName> GetImageName()
         {
             return Task.FromResult<DockerImageName>(null);
         }

@@ -57,9 +57,9 @@ namespace TestContainers.Core.Containers
 
         public ContainerBuilder<T> WithNetworkMode(string networkMode) => this;
 
-        public ContainerBuilder<T> WithNetwork(INetwork network) => this;
+        public ContainerBuilder<T> WithNetwork(INetwork network) => SetOptionAndReturnSelf(o => o.Network = network);
 
-        public ContainerBuilder<T> WithNetworkAliases(params string[] aliases) => this;
+        public ContainerBuilder<T> WithNetworkAliases(params string[] aliases) => SetOptionAndReturnSelf(o => o.NetworkAliases = aliases);
 
         public ContainerBuilder<T> WithImagePullPolicy(IImagePullPolicy policy) => this;
 
@@ -92,6 +92,9 @@ namespace TestContainers.Core.Containers
         public string[] CommandParts { get; internal set; }
         public Dictionary<string, string> Env { get; internal set; } = new Dictionary<string, string>();
         public long? ShmSize { get; internal set; }
+        public List<int> ExposedPorts { get; internal set; } = new List<int>();
+        public string[] NetworkAliases { get; internal set; }
+        public INetwork Network { get; internal set; }
     }
 
     public class DockerComposeContainerBuilder  : IBuilder<DockerComposeContainer>

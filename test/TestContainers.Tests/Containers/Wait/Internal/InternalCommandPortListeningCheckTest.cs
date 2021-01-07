@@ -20,7 +20,7 @@ namespace TestContainers.Tests.Containers.Wait.Internal
             _container = new ContainerBuilder<GenericContainer>(new ImageFromDockerfile()
                 .WithFileFromClasspath("Dockerfile", dockerfile)
                 .WithFileFromClasspath("nginx.conf", "internal-port-check-dockerfile/nginx.conf")
-                .GetTask()
+                .GetImageName()
             ).Build();
         }
 

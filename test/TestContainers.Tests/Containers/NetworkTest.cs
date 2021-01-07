@@ -45,7 +45,7 @@ namespace TestContainers.Tests.Containers
                             .Build()
             )
             {
-                string id = network.Id;
+                string id = await network.GetId();
                 Assert.Equal(
                         "macvlan",
                         (await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(id))).Driver//"Flag is set",
@@ -59,11 +59,11 @@ namespace TestContainers.Tests.Containers
         {
             await using (
                     var network = Network.Builder
-                            //.createNetworkCmdModifier(cmd->cmd.withDriver("macvlan"))
+                            .WithCreateNetworkCmdModifier(cmd=>cmd.Driver="macvlan")
                             .Build()
             )
             {
-                string id = network.Id;
+                string id = await network.GetId();
                 Assert.Equal(
                         "macvlan",
                         (await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(id))).Driver // "Flag is set",
@@ -78,7 +78,7 @@ namespace TestContainers.Tests.Containers
         {
             await using (var network = Network.NewNetwork())
             {
-                string firstId = network.Id;
+                string firstId = await network.GetId();
                 Assert.NotNull(
                         await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(firstId))// "Network exists",
 
@@ -89,7 +89,7 @@ namespace TestContainers.Tests.Containers
                 Assert.NotEqual(
 
                         firstId,
-                        (await DockerClientFactory.Instance.Execute(c=>c.Networks.InspectNetworkAsync(network.Id))).ID//"New network created",
+                        (await DockerClientFactory.Instance.Execute(async c=>await c.Networks.InspectNetworkAsync(await network.GetId()))).ID//"New network created",
                 );
             }
         }

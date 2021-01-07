@@ -34,12 +34,26 @@ namespace TestContainers.Utility
                 types = new[] { OutputType.STDOUT, OutputType.STDERR };
             }
 
-            var parameters = new ContainerLogsParameters { Follow = true, Since = "0", ShowStderr=true, ShowStdout=true };
+            var parameters = new ContainerLogsParameters { Follow = true, Since = "0" };
 
-
-            using (var r = new StreamReader(await DockerClientFactory.Instance.Execute(c => c.Containers.GetContainerLogsAsync(containerId, parameters, default))))
+            foreach (var outputType in types)
             {
-                return r.ReadToEnd();
+                if (outputType == OutputType.STDERR)
+                {
+                    parameters.ShowStderr = true;
+                }
+                else if (outputType == OutputType.STDOUT)
+                {
+                    parameters.ShowStdout = true;
+                }
+            }
+
+            using (var stream = await DockerClientFactory.Instance.Execute(c => c.Containers.GetContainerLogsAsync(containerId, parameters, default)))
+            {
+                using (var r = new StreamReader(stream))
+                {
+                    return r.ReadToEnd();
+                }
             }
 
 

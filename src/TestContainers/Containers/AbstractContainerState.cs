@@ -53,11 +53,8 @@ namespace TestContainers.Containers
             return await DockerClientFactory.Instance.Execute(c => c.Containers.InspectContainerAsync(ContainerId, cancellationToken));
         }
 
-        public virtual Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
+        public abstract Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken);
+       
         public virtual async Task<int> GetFirstMappedPort(CancellationToken cancellationToken)
         {
             var mappedPort = await (await GetExposedPorts(cancellationToken)).Take(1).Select(async port => await GetMappedPort(port, cancellationToken)).FirstOrDefault();

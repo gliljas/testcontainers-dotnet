@@ -19,7 +19,7 @@ namespace TestContainers.Tests.Containers.Wait.Strategy
             _container = new ContainerBuilder<GenericContainer>(new ImageFromDockerfile()
                 .WithFileFromClasspath("write_file_and_loop.sh", "health-wait-strategy-dockerfile/write_file_and_loop.sh")
                 .WithFileFromClasspath("Dockerfile", "health-wait-strategy-dockerfile/Dockerfile")
-                .GetTask()
+                .GetImageName()
                 )
                 .WaitingFor(TestContainers.Containers.Wait.Strategy.Wait.ForHealthcheck().WithStartupTimeout(TimeSpan.FromSeconds(3)))
                 .Build();
