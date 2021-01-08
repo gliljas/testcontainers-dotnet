@@ -4,6 +4,8 @@ using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
+using ICSharpCode.SharpZipLib.Tar;
 using JetBrains.Annotations;
 using Mono.Unix;
 
@@ -27,7 +29,7 @@ namespace TestContainers.Utility
         }
 
         public string ResolvedPath => _resolvedPath.Value;
-        
+
         private int GetUnixFileMode(string pathAsString)
         {
 
@@ -57,19 +59,19 @@ namespace TestContainers.Utility
             //}
             //catch (IOException)// | UnsupportedOperationException e) {
             //{    // fallback for non-posix environments
-                int mode = AbstractTransferable.DEFAULT_FILE_MODE;
+            int mode = AbstractTransferable.DEFAULT_FILE_MODE;
 
-                if (Directory.Exists(path.FullName))
-                {
-                    mode = DEFAULT_DIR_MODE;
-                }
-                //else if (Files.isExecutable(path))
-                //{
-                //    mode |= 0111; // equiv to +x for user/group/others
-                //}
+            if (Directory.Exists(path.FullName))
+            {
+                mode = DEFAULT_DIR_MODE;
+            }
+            //else if (Files.isExecutable(path))
+            //{
+            //    mode |= 0111; // equiv to +x for user/group/others
+            //}
 
-                return mode;
-           // }
+            return mode;
+            // }
         }
 
         internal static MountableFile ForClasspathResource(string v)
@@ -85,7 +87,7 @@ namespace TestContainers.Utility
 
         public override long Size => File.Exists(ResolvedPath) ? new FileInfo(ResolvedPath).Length : 0;
 
-        
+
         //private MountableFile() //: base()
         //{
 
@@ -172,21 +174,5 @@ namespace TestContainers.Utility
         {
             throw new NotImplementedException();
         }
-    }
-
-    public abstract class AbstractTransferable : ITransferable
-    {
-        internal static int DEFAULT_FILE_MODE = 0100644;
-        internal static int DEFAULT_DIR_MODE = 040755;
-
-
-
-        public abstract int FileMode { get; }
-
-        public abstract long Size { get; }
-
-        public abstract string Description { get; }
-
-        public abstract byte[] GetBytes();
     }
 }

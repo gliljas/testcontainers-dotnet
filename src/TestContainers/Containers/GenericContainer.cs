@@ -71,6 +71,9 @@ namespace TestContainers.Core.Containers
         //public bool PrivilegedMode { get; internal set; }
         //public string ImageName { get; internal set; }
 
+        // Maintain order in which entries are added, as earlier target location may be a prefix of a later location.
+        private LinkedList<KeyValuePair<MountableFile, string>> _copyToFileContainerPathMap = new LinkedList<KeyValuePair<MountableFile, string>>();
+
 
 
         public GenericContainer(DockerImageName dockerImageName, ContainerOptions containerOptions) : this(new RemoteDockerImage(dockerImageName), containerOptions)
@@ -227,7 +230,11 @@ namespace TestContainers.Core.Containers
                     _containerId = createResponse.ID;
 
                     // TODO use single "copy" invocation (and calculate a hash of the resulting tar archive)
-                    //copyToFileContainerPathMap.forEach(CopyFileToContainer);
+                    foreach (var pair in _copyToFileContainerPathMap)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        await CopyFileToContainer(pair.Key, pair.Value, cancellationToken);
+                    }
                 }
 
                 //  ConnectToPortForwardingNetwork(createCommand.);

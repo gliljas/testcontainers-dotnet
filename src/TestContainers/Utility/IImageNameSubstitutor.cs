@@ -10,49 +10,55 @@ namespace TestContainers.Utility
 {
     public abstract class ImageNameSubstitutor
     {
-        private static ILogger _logger;
+        private static readonly ILogger _logger = StaticLoggerFactory.CreateLogger<ImageNameSubstitutor>();
         public abstract Task<DockerImageName> Apply(DockerImageName original);
 
         protected abstract string Description { get; }
 
-        public static ImageNameSubstitutor Instance => null;
+        internal static ImageNameSubstitutor _instance;
 
-        static ImageNameSubstitutor _defaultImplementation = new DefaultImageNameSubstitutor();
+        internal static ImageNameSubstitutor _defaultImplementation = new DefaultImageNameSubstitutor();
 
-        private static ImageNameSubstitutor CreateDefault()
+        public static ImageNameSubstitutor Instance
         {
-            string configuredClassName = TestContainersConfiguration.Instance.ImageSubstitutorClassName;
-
-            ImageNameSubstitutor instance;
-
-            if (configuredClassName != null)
+            get
             {
-                _logger.LogDebug("Attempting to instantiate an ImageNameSubstitutor with class: {configuredClassName}", configuredClassName);
-                ImageNameSubstitutor configuredInstance;
-                try
+                if (_instance == null)
                 {
-                    configuredInstance = (ImageNameSubstitutor) Activator.CreateInstance(Type.GetType(configuredClassName));
+                    string configuredClassName = TestContainersConfiguration.Instance.ImageSubstitutorClassName;
+
+
+                    if (configuredClassName != null)
+                    {
+                        _logger.LogDebug("Attempting to instantiate an ImageNameSubstitutor with class: {configuredClassName}", configuredClassName);
+                        ImageNameSubstitutor configuredInstance;
+                        try
+                        {
+                            configuredInstance = (ImageNameSubstitutor) Activator.CreateInstance(Type.GetType(configuredClassName));
+                        }
+                        catch (Exception e)
+                        {
+                            throw new ArgumentException("Configured Image Substitutor could not be loaded: " + configuredClassName, e);
+                        }
+
+                        _logger.LogInformation("Found configured ImageNameSubstitutor: {configuredInstance}", configuredInstance.Description);
+
+                        _instance = new ChainedImageNameSubstitutor(
+                            WrapWithLogging(_defaultImplementation),
+                            WrapWithLogging(configuredInstance)
+                        );
+                    }
+                    else
+                    {
+                        _instance = WrapWithLogging(_defaultImplementation);
+                    }
+
+                    _logger.LogInformation("Image name substitution will be performed by: {instance}", _instance.Description);
                 }
-                catch (Exception e)
-                {
-                    throw new ArgumentException("Configured Image Substitutor could not be loaded: " + configuredClassName, e);
-                }
-
-                _logger.LogInformation("Found configured ImageNameSubstitutor: {configuredInstance}", configuredInstance.Description);
-
-                instance = new ChainedImageNameSubstitutor(
-                    WrapWithLogging(_defaultImplementation),
-                    WrapWithLogging(configuredInstance)
-                );
+                return _instance;
             }
-            else
-            {
-                instance = WrapWithLogging(_defaultImplementation);
-            }
-
-            _logger.LogInformation("Image name substitution will be performed by: {instance}", instance.Description);
-            return instance;
         }
+
 
         private static ImageNameSubstitutor WrapWithLogging(ImageNameSubstitutor wrappedInstance)
         {
@@ -89,8 +95,8 @@ namespace TestContainers.Utility
         }
 
         /**
-     * Wrapper substitutor that passes the original image name through a default substitutor and then the configured one
-     */
+        * Wrapper substitutor that passes the original image name through a default substitutor and then the configured one
+*/
         private class ChainedImageNameSubstitutor : ImageNameSubstitutor
         {
             private ImageNameSubstitutor _defaultInstance;

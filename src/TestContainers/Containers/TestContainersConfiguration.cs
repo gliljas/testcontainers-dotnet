@@ -56,10 +56,10 @@ namespace TestContainers.Core.Containers
 
 
         public static TestContainersConfiguration Instance { get; internal set; } = new TestContainersConfiguration();
-        public bool EnvironmentSupportsReuse { get; internal set; }
-        public string ImageSubstitutorClassName { get; internal set; }
-        public string DockerClientStrategyClassName { get; internal set; }
-        public string TransportType => GetEnvVarOrProperty("transport.type", "okhttp");
+        public virtual bool EnvironmentSupportsReuse { get; internal set; }
+        public virtual string ImageSubstitutorClassName { get; internal set; }
+        public virtual string DockerClientStrategyClassName { get; internal set; }
+        public virtual string TransportType => GetEnvVarOrProperty("transport.type", "okhttp");
 
         [ContractAnnotation("_, !null -> !null")]
         public virtual string GetEnvVarOrProperty(string propertyName, string defaultValue) => GetConfigurable(propertyName, defaultValue); //, _userProperties, _classpathProperties
@@ -92,9 +92,5 @@ namespace TestContainers.Core.Containers
             //    throw new NotImplementedException();
         }
 
-        internal static void SetInstance(TestContainersConfiguration configInstance)
-        {
-            //   throw new NotImplementedException();
-        }
     }
 }

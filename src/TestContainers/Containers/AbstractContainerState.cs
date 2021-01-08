@@ -6,7 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using ICSharpCode.SharpZipLib.Tar;
 using TestContainers.Core.Containers;
+using TestContainers.Utility;
 
 namespace TestContainers.Containers
 {
@@ -38,6 +40,54 @@ namespace TestContainers.Containers
             //  DockerClientFactory.Instance.Client().Containers.ExtractArchiveToContainerAsync()
         }
 
+        public async Task CopyFileToContainer(MountableFile mountableFile, string containerPath, CancellationToken cancellationToken)
+        {
+            var sourceFile = new FileInfo(mountableFile.ResolvedPath);
+
+            if (containerPath.EndsWith("/") && sourceFile.Exists)
+            {
+                var logger = StaticLoggerFactory.CreateLogger<GenericContainer>();
+                logger.LogWarning("folder-like containerPath in copyFileToContainer is deprecated, please explicitly specify a file path");
+                await CopyFileToContainer((AbstractTransferable) mountableFile, containerPath + sourceFile.Name, cancellationToken);
+            }
+            else
+            {
+                await CopyFileToContainer((AbstractTransferable) mountableFile, containerPath, cancellationToken);
+            }
+        }
+
+        /**
+     *
+     * Copies a file to the container.
+     *
+     * @param transferable file which is copied into the container
+     * @param containerPath destination path inside the container
+     */
+     public virtual async Task CopyFileToContainer(AbstractTransferable transferable, string containerPath, CancellationToken cancellationToken)
+        {
+            if (!await IsCreated(cancellationToken))
+            {
+                throw new IllegalStateException("copyFileToContainer can only be used with created / running container");
+            }
+
+            using (
+                var byteArrayOutputStream = new ByteArrayOutputStream())
+            using (
+                var tarArchive = new TarOutputStream(byteArrayOutputStream)
+            ) {
+                //tarArchive.S .setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+
+                await transferable.TransferTo(tarArchive, containerPath);
+                tarArchive.finish();
+
+                DockerClientFactory.instance().client()
+                    .copyArchiveToContainerCmd(getContainerId())
+                    .withTarInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))
+                    .withRemotePath("/")
+                    .exec();
+            }
+            }
+
         public virtual Task<IReadOnlyList<string>> GetBoundPortNumbers(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
@@ -54,7 +104,7 @@ namespace TestContainers.Containers
         }
 
         public abstract Task<IReadOnlyList<int>> GetExposedPorts(CancellationToken cancellationToken);
-       
+
         public virtual async Task<int> GetFirstMappedPort(CancellationToken cancellationToken)
         {
             var mappedPort = await (await GetExposedPorts(cancellationToken)).Take(1).Select(async port => await GetMappedPort(port, cancellationToken)).FirstOrDefault();

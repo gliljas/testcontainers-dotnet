@@ -93,7 +93,7 @@ namespace TestContainers.Tests
             }
             finally
             {
-                TestContainersConfiguration.SetInstance(configInstance);
+                TestContainersConfiguration.Instance = configInstance;
             }
         }
     }

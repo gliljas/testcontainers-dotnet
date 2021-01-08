@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Docker.DotNet;
@@ -40,7 +43,7 @@ namespace TestContainers.Utility
             {
                 foreach (var container in _registeredContainers)
                 {
-                    await StopContainer(container.Key,container.Value);
+                    await StopContainer(container.Key, container.Value);
                 }
 
                 foreach (var network in _registeredNetworks.Keys)
@@ -52,7 +55,7 @@ namespace TestContainers.Utility
                 {
                     await RemoveImage(image);
                 }
-             }
+            }
             finally
             {
                 _syncLock.Release();
@@ -64,7 +67,7 @@ namespace TestContainers.Utility
     *
     * @param filter the filter
     */
-        public void RegisterFilterForCleanup(List<KeyValuePair<string,string>> filter)
+        public void RegisterFilterForCleanup(List<KeyValuePair<string, string>> filter)
         {
             //synchronized(DEATH_NOTE) {
             //    DEATH_NOTE.add(filter);
@@ -205,6 +208,45 @@ namespace TestContainers.Utility
                 //       LOGGER.trace("Error encountered shutting down container (ID: {}) - it may not have been stopped, or may already be stopped. Root cause: {}",
                 //          containerId,
                 //          Throwables.getRootCause(e).getMessage());
+            }
+        }
+
+        public class FilterRegistry
+        {
+            internal static readonly String ACKNOWLEDGMENT = "ACK";
+            private readonly StreamReader _ryukInputStream;
+            private readonly StreamWriter _ryukOutputStream;
+            private ILogger _logger = StaticLoggerFactory.CreateLogger<FilterRegistry>();
+
+            public FilterRegistry(Stream ryukInputStream, Stream ryukOutputStream)
+            {
+                _ryukInputStream = new StreamReader(ryukInputStream);
+                _ryukOutputStream = new StreamWriter(ryukOutputStream);
+            }
+
+            protected internal bool Register(IReadOnlyCollection<KeyValuePair<string,string>> filters)
+            {
+                var query = string.Join("&", filters.Select(it =>
+                {
+                    return Uri.EscapeDataString(it.Key) + "=" + Uri.EscapeDataString(it.Value);
+
+                }));
+
+                _logger.LogDebug("Sending '{query}' to Ryuk", query);
+                _ryukOutputStream.Write(query);
+                _ryukOutputStream.Write('\n');
+                _ryukOutputStream.Flush();
+
+                return WaitForAcknowledgment(_ryukInputStream);
+            }
+
+            private static bool WaitForAcknowledgment(StreamReader input)
+            {
+                string line;
+                while ((line = input.ReadLine()) != null && !ACKNOWLEDGMENT.Equals(line, StringComparison.OrdinalIgnoreCase))
+                {
+                }
+                return ACKNOWLEDGMENT.Equals(line, StringComparison.OrdinalIgnoreCase);
             }
         }
     }
