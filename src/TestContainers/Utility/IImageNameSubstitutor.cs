@@ -1,22 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using TestContainers.Core.Containers;
 using TestContainers.Images;
 
 namespace TestContainers.Utility
 {
-    //public interface IImageNameSubstitutor
-    //{
-    //}
-
-    //public delegate DockerImageName ImageNameSubstitution(DockerImageName dockerImageName);
-
     public abstract class ImageNameSubstitutor
     {
         private static ILogger _logger;
-        public abstract DockerImageName Apply(DockerImageName original);
+        public abstract Task<DockerImageName> Apply(DockerImageName original);
 
         protected abstract string Description { get; }
 
@@ -73,9 +68,9 @@ namespace TestContainers.Utility
                 _wrappedInstance = wrappedInstance;
             }
 
-            public override DockerImageName Apply(DockerImageName original)
+            public override async Task<DockerImageName> Apply(DockerImageName original)
             {
-                var replacementImage = _wrappedInstance.Apply(original);
+                var replacementImage = await _wrappedInstance.Apply(original);
 
                 if (!replacementImage.Equals(original))
                 {
@@ -107,9 +102,9 @@ namespace TestContainers.Utility
                 _configuredInstance = configuredInstance;
             }
 
-            public override DockerImageName Apply(DockerImageName original)
+            public override async Task<DockerImageName> Apply(DockerImageName original)
             {
-                return _configuredInstance.Apply(_defaultInstance.Apply(original));
+                return await _configuredInstance.Apply(await _defaultInstance.Apply(original));
             }
 
 

@@ -47,7 +47,7 @@ namespace TestContainers.Utility
         {
             _hash = hash;
         }
-        public override string Separator => ":";
+        public override string Separator => "@";
 
         public override bool IsValid() => HashRegex.IsMatch(_hash);
 

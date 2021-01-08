@@ -5,25 +5,87 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using JetBrains.Annotations;
+using Mono.Unix;
 
 namespace TestContainers.Utility
 {
-    public class MountableFile : ITransferable
+    public class MountableFile : AbstractTransferable
     {
+        private static readonly string TESTCONTAINERS_TMP_DIR_PREFIX = ".testcontainers-tmp-";
+        private static readonly string OS_MAC_TMP_DIR = "/tmp";
+        private static readonly int BASE_FILE_MODE = 0100000;
+        private static readonly int BASE_DIR_MODE = 0040000;
         private readonly string _path;
+        private readonly Lazy<string> _resolvedPath;
+        private int? _forcedFileMode;
 
-        private MountableFile(string path)
+        internal MountableFile(string path, int mode)
         {
             _path = path;
+            _forcedFileMode = mode;
+            _resolvedPath = new Lazy<string>(() => ResolvePath());
         }
-        public int FileMode => throw new NotImplementedException();
 
-        public long Size => throw new NotImplementedException();
+        public string ResolvedPath => _resolvedPath.Value;
+        
+        private int GetUnixFileMode(string pathAsString)
+        {
 
-        public string Description => throw new NotImplementedException();
+            var path = new FileInfo(pathAsString);
+
+            if (_forcedFileMode.HasValue)
+            {
+                return GetModeValue(path);
+            }
+            return GetUnixFileMode(path);
+        }
+
+        private int GetModeValue(FileInfo path)
+        {
+            int result = Directory.Exists(path.FullName) ? BASE_DIR_MODE : BASE_FILE_MODE;
+            return result | (_forcedFileMode ?? 0);
+        }
+
+        private int GetUnixFileMode(FileInfo path)
+        {
+            //try
+            //{
+            //    new UnixFileInfo(path.FullName).Protection
+            //    var acl = path.;
+
+            //    return 0;
+            //}
+            //catch (IOException)// | UnsupportedOperationException e) {
+            //{    // fallback for non-posix environments
+                int mode = AbstractTransferable.DEFAULT_FILE_MODE;
+
+                if (Directory.Exists(path.FullName))
+                {
+                    mode = DEFAULT_DIR_MODE;
+                }
+                //else if (Files.isExecutable(path))
+                //{
+                //    mode |= 0111; // equiv to +x for user/group/others
+                //}
+
+                return mode;
+           // }
+        }
+
+        internal static MountableFile ForClasspathResource(string v)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override string Description => throw new NotImplementedException();
 
         public string FileSystemPath { get; internal set; }
 
+        public override int FileMode => GetUnixFileMode(ResolvedPath);
+
+        public override long Size => File.Exists(ResolvedPath) ? new FileInfo(ResolvedPath).Length : 0;
+
+        
         //private MountableFile() //: base()
         //{
 
@@ -48,8 +110,12 @@ namespace TestContainers.Utility
      */
         public static MountableFile ForHostPath(string path, int mode)
         {
-            //return ForHostPath(Paths.get(path), mode);
-            return null;
+            return ForHostPath(new FileInfo(path), mode);
+        }
+
+        public static MountableFile ForHostPath(FileInfo fileInfo, int mode)
+        {
+            return new MountableFile(fileInfo.FullName, mode);
         }
 
         /**
@@ -86,6 +152,11 @@ namespace TestContainers.Utility
             return resourcePath;
         }
 
+        internal static MountableFile ForClasspathResource(string v, int tEST_FILE_MODE)
+        {
+            throw new NotImplementedException();
+        }
+
         private static string UnencodeResourceURIToFilePath(string resource)
         {
 
@@ -97,7 +168,25 @@ namespace TestContainers.Utility
 
         }
 
-        public byte[] GetBytes() => File.ReadAllBytes(_path);
-        
+        public override byte[] GetBytes()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public abstract class AbstractTransferable : ITransferable
+    {
+        internal static int DEFAULT_FILE_MODE = 0100644;
+        internal static int DEFAULT_DIR_MODE = 040755;
+
+
+
+        public abstract int FileMode { get; }
+
+        public abstract long Size { get; }
+
+        public abstract string Description { get; }
+
+        public abstract byte[] GetBytes();
     }
 }

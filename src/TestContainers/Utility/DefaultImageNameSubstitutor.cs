@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using TestContainers.Images;
 
 namespace TestContainers.Utility
@@ -18,6 +19,6 @@ namespace TestContainers.Utility
 
         protected override string Description => $"DefaultImageNameSubstitutor ({_configurationFileImageNameSubstitutor})";
 
-        public override DockerImageName Apply(DockerImageName original) => _configurationFileImageNameSubstitutor.Apply(original);
+        public override Task<DockerImageName> Apply(DockerImageName original) => _configurationFileImageNameSubstitutor.Apply(original);
     }
 }

@@ -7,7 +7,7 @@ using TestContainers.Images;
 
 namespace TestContainers.Core.Containers
 {
-    internal class TestContainersConfiguration
+    public class TestContainersConfiguration
     {
         private readonly Dictionary<string, string> _environment = new Dictionary<string, string>();
 
@@ -20,6 +20,22 @@ namespace TestContainers.Core.Containers
         private static readonly string VNC_RECORDER_IMAGE = "testcontainers/vnc-recorder";
         private static readonly string COMPOSE_IMAGE = "docker/compose";
         private static readonly string ALPINE_IMAGE = "alpine";
+
+        //TODO: Public?
+        public virtual DockerImageName GetConfiguredSubstituteImage(DockerImageName original)
+        {
+            foreach (var entry in CONTAINER_MAPPING)
+            {
+                if (original.IsCompatibleWith(entry.Key))
+                {
+                    return
+                       (DockerImageName.Parse(Convert.ToString(GetEnvVarOrProperty(entry.Value, null)).Trim()) ?? original).AsCompatibleSubstituteFor(original);
+
+                }
+            }
+            return original;
+        }
+
         private static readonly string RYUK_IMAGE = "testcontainers/ryuk";
         private static readonly string KAFKA_IMAGE = "confluentinc/cp-kafka";
         private static readonly string PULSAR_IMAGE = "apachepulsar/pulsar";
@@ -46,7 +62,7 @@ namespace TestContainers.Core.Containers
         public string TransportType => GetEnvVarOrProperty("transport.type", "okhttp");
 
         [ContractAnnotation("_, !null -> !null")]
-        public string GetEnvVarOrProperty(string propertyName, string defaultValue) => GetConfigurable(propertyName, defaultValue); //, _userProperties, _classpathProperties
+        public virtual string GetEnvVarOrProperty(string propertyName, string defaultValue) => GetConfigurable(propertyName, defaultValue); //, _userProperties, _classpathProperties
 
         private string GetConfigurable(string propertyName, string defaultValue)//, params Properties[] propertiesSources
         {
@@ -71,14 +87,14 @@ namespace TestContainers.Core.Containers
 
             return defaultValue;
         }
-        internal void UpdateGlobalConfig(string prop, string value)
+        internal virtual void UpdateGlobalConfig(string prop, string value)
         {
-        //    throw new NotImplementedException();
+            //    throw new NotImplementedException();
         }
 
         internal static void SetInstance(TestContainersConfiguration configInstance)
         {
-         //   throw new NotImplementedException();
+            //   throw new NotImplementedException();
         }
     }
 }
