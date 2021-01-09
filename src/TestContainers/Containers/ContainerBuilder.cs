@@ -8,6 +8,7 @@ using TestContainers.Containers.Mounts;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Images;
+using TestContainers.Lifecycle;
 
 namespace TestContainers.Core.Containers
 {
@@ -30,6 +31,13 @@ namespace TestContainers.Core.Containers
             optionAction(_options);
             return this;
         }
+
+        public ContainerBuilder<T> DependsOn(params IStartable[] startables)
+        {
+            _options.DependsOn = startables;
+            return this;
+        }
+
         public ContainerBuilder<T> WaitingFor(IWaitStrategy waitStrategy) => SetOptionAndReturnSelf(o => o.WaitStrategy = waitStrategy);
 
         public ContainerBuilder<T> WithFileSystemBind(string hostPath, string containerPath) => this;
@@ -95,6 +103,7 @@ namespace TestContainers.Core.Containers
         public List<int> ExposedPorts { get; internal set; } = new List<int>();
         public string[] NetworkAliases { get; internal set; }
         public INetwork Network { get; internal set; }
+        public IStartable[] DependsOn { get; internal set; }
     }
 
     public class DockerComposeContainerBuilder  : IBuilder<DockerComposeContainer>
