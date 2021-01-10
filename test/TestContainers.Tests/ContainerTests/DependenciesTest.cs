@@ -14,7 +14,7 @@ namespace TestContainers.Tests.ContainerTests
     public class DependenciesTest
     {
         [Fact]
-        public async Task shouldWorkWithSimpleDependency()
+        public async Task ShouldWorkWithSimpleDependency()
         {
             var startable = Substitute.For<IStartable>();
 
@@ -30,13 +30,13 @@ namespace TestContainers.Tests.ContainerTests
             }
 
             _ = startable.ReceivedWithAnyArgs(1).Start();
-            _ = startable.DidNotReceiveWithAnyArgs().Start();
+            _ = startable.DidNotReceiveWithAnyArgs().Stop();
 //            VisibleAssertions.assertEquals("Started once", 1, startable.StartInvocationCount
   //          VisibleAssertions.assertEquals("Does not trigger .stop()", 0, startable.getStopInvocationCount().intValue());
         }
 
         [Fact]
-        public async Task shouldWorkWithMutlipleDependencies()
+        public async Task ShouldWorkWithMultipleDependencies()
         {
             var startable1 = Substitute.For<IStartable>();
             var startable2 = Substitute.For<IStartable>();
@@ -59,7 +59,7 @@ namespace TestContainers.Tests.ContainerTests
         }
 
         [Fact]
-        public async Task shouldStartEveryTime()
+        public async Task ShouldStartEveryTime()
         {
             var startable = Substitute.For<IStartable>();
 
@@ -81,13 +81,13 @@ namespace TestContainers.Tests.ContainerTests
             }
 
             _ = startable.ReceivedWithAnyArgs(3).Start();
-            _ = startable.DidNotReceiveWithAnyArgs().Start();
+            _ = startable.DidNotReceiveWithAnyArgs().Stop();
             //    VisibleAssertions.assertEquals("Started multiple times", 3, startable.StartInvocationCount
             //    VisibleAssertions.assertEquals("Does not trigger .stop()", 0, startable.getStopInvocationCount().intValue());
         }
 
         [Fact]
-        public async Task shouldStartTransitiveDependencies()
+        public async Task ShouldStartTransitiveDependencies()
         {
             var transitiveOfTransitiveStartable = Substitute.For<IStartable>();
             var transitiveStartable = Substitute.For<IStartable>();
@@ -113,7 +113,7 @@ namespace TestContainers.Tests.ContainerTests
         }
 
         [Fact]
-        public async Task shouldHandleDiamondDependencies()
+        public async Task ShouldHandleDiamondDependencies()
         {
             var a = Substitute.For<IStartable>();
             var b = Substitute.For<IStartable>();
@@ -136,7 +136,7 @@ namespace TestContainers.Tests.ContainerTests
         }
 
         [Fact]
-        public async Task shouldHandleParallelStream()
+        public async Task ShouldHandleParallelStream()
         {
             var startables = Enumerable.Range(0, 10).Select(x => Substitute.For<IStartable>()).ToList();
 

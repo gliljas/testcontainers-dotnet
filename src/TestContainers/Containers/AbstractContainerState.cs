@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using ICSharpCode.SharpZipLib.Tar;
+using Microsoft.Extensions.Logging;
 using TestContainers.Core.Containers;
 using TestContainers.Utility;
 
@@ -63,7 +64,7 @@ namespace TestContainers.Containers
      * @param transferable file which is copied into the container
      * @param containerPath destination path inside the container
      */
-     public virtual async Task CopyFileToContainer(AbstractTransferable transferable, string containerPath, CancellationToken cancellationToken)
+        public virtual async Task CopyFileToContainer(AbstractTransferable transferable, string containerPath, CancellationToken cancellationToken)
         {
             if (!await IsCreated(cancellationToken))
             {
@@ -71,22 +72,21 @@ namespace TestContainers.Containers
             }
 
             using (
-                var byteArrayOutputStream = new ByteArrayOutputStream())
+                var byteArrayOutputStream = new MemoryStream())
             using (
                 var tarArchive = new TarOutputStream(byteArrayOutputStream)
-            ) {
+            )
+            {
                 //tarArchive.S .setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
                 await transferable.TransferTo(tarArchive, containerPath);
-                tarArchive.finish();
+                tarArchive.Finish();
 
-                DockerClientFactory.instance().client()
-                    .copyArchiveToContainerCmd(getContainerId())
-                    .withTarInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))
-                    .withRemotePath("/")
-                    .exec();
+                await DockerClientFactory.Instance.Execute(c =>
+                    c.Containers.ExtractArchiveToContainerAsync(ContainerId, new ContainerPathStatParameters { Path = "/" }, new MemoryStream(byteArrayOutputStream.ToArray())
+                    ));
             }
-            }
+        }
 
         public virtual Task<IReadOnlyList<string>> GetBoundPortNumbers(CancellationToken cancellationToken)
         {

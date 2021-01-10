@@ -9,6 +9,7 @@ using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.WaitStrategies;
 using TestContainers.Images;
 using TestContainers.Lifecycle;
+using TestContainers.Utility;
 
 namespace TestContainers.Core.Containers
 {
@@ -20,6 +21,11 @@ namespace TestContainers.Core.Containers
         public ContainerBuilder(DockerImageName dockerImage) : this(Task.FromResult(dockerImage))
         {
             _dockerImage = dockerImage;
+        }
+
+        internal ContainerBuilder<T> WithCopyFileToContainer(MountableFile mountableFile, string containerPath)
+        {
+            throw new NotImplementedException();
         }
 
         public ContainerBuilder(Task<DockerImageName> dockerImage)
@@ -42,14 +48,19 @@ namespace TestContainers.Core.Containers
 
         public ContainerBuilder<T> WithFileSystemBind(string hostPath, string containerPath) => this;
 
-        public ContainerBuilder<T> WithFileSystemBind(string hostPath, string containerPath, AccessMode accessMode) => this;
+        public ContainerBuilder<T> WithFileSystemBind(string hostPath, string containerPath, BindMode bindMode) => this;
 
-        public ContainerBuilder<T> WithVolumesFrom(IContainer container, AccessMode accessMode) => this;
+        public ContainerBuilder<T> WithVolumesFrom(IContainer container, BindMode bindMode) => this;
 
         public ContainerBuilder<T> WithExposedPorts(params int[] ports) => this;
         //public ContainerBuilder<T> WithCopyFileToContainer(MountableFile mountableFile, string containerPath);
 
         public ContainerBuilder<T> WithEnv(string key, string value) => SetOptionAndReturnSelf(o => { });
+
+        internal ContainerBuilder<T> WithClasspathResourceMapping(string resource, string v, BindMode readOnly)
+        {
+            throw new NotImplementedException();
+        }
 
         public ContainerBuilder<T> WithEnv(string key, Func<string, string> value) => SetOptionAndReturnSelf(o => { });
 

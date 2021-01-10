@@ -18,6 +18,6 @@ namespace TestContainers.Containers.Mounts
         /// <summary>
         /// Sets the access mode of the mount
         /// </summary>
-        AccessMode AccessMode { get; }
+        BindMode BindMode { get; }
     }
 }

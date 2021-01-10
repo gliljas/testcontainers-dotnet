@@ -450,13 +450,13 @@ namespace TestContainers.Containers
             Logger.LogDebug("Set env COMPOSE_FILE={composeFileEnvVariableValue}", composeFileEnvVariableValue);
 
             AddEnv(ENV_COMPOSE_FILE, composeFileEnvVariableValue);
-            AddFileSystemBind(pwd, containerPwd, AccessMode.ReadWrite);
+            AddFileSystemBind(pwd, containerPwd, BindMode.ReadWrite);
 
             // Ensure that compose can access docker. Since the container is assumed to be running on the same machine
             //  as the docker daemon, just mapping the docker control socket is OK.
             // As there seems to be a problem with mapping to the /var/run directory in certain environments (e.g. CircleCI)
             //  we map the socket file outside of /var/run, as just /docker.sock
-            AddFileSystemBind(DockerClientFactory.Instance.GetRemoteDockerUnixSocketPath(), "/docker.sock", AccessMode.ReadWrite);
+            AddFileSystemBind(DockerClientFactory.Instance.GetRemoteDockerUnixSocketPath(), "/docker.sock", BindMode.ReadWrite);
             AddEnv("DOCKER_HOST", "unix:///docker.sock");
             SetStartupCheckStrategy(new IndefiniteWaitOneShotStartupCheckStrategy());
             SetWorkingDirectory(containerPwd);

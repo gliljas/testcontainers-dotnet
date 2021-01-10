@@ -105,6 +105,8 @@ namespace TestContainers.Core.Containers
                 return;
             }
 
+            await Startables.DeepStart(_containerOptions.DependsOn);
+
             await DoStart(cancellationToken);
         }
 
@@ -516,6 +518,8 @@ namespace TestContainers.Core.Containers
         public string[] CommandParts => throw new NotImplementedException();
 
         public IReadOnlyList<IBind> Binds => throw new NotImplementedException();
+
+        public ISet<IStartable> Dependencies => throw new NotImplementedException();
 
 #if !NETSTANDARD2_0
         public async ValueTask DisposeAsync()

@@ -20,20 +20,19 @@ namespace TestContainers.Lifecycle
         public static Task DeepStart(IEnumerable<IStartable> startables) => DeepStart(new Dictionary<IStartable, Task>(), startables);
         private static async Task DeepStart(Dictionary<IStartable, Task> started, IEnumerable<IStartable> startables)
         {
-            var futures = startables.Select(async it =>
+            var futures = new List<Task>();
+            foreach (var startable in startables)
             {
-                var subStarted = new Dictionary<IStartable, Task>();
-                Task future;
-                if (!started.ContainsKey(it))
+                if (!started.ContainsKey(startable))
                 {
-                    future = DeepStart(subStarted, it.Dependencies).ContinueWith(async x => await it.Start());
-                    started[it] = future;
-                }
-                foreach (var entry in subStarted)
-                {
-                    started.Add(entry.Key, entry.Value);
-                }
-            });
+                    await DeepStart(started, startable.Dependencies);
+                    if (!started.ContainsKey(startable))
+                    {
+                        started[startable] = startable.Start();
+                    }
+                }           
+            }
+            
             await Task.WhenAll(futures);
         }
 
