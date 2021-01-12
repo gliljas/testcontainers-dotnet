@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Threading.Tasks;
 using Docker.DotNet.Models;
@@ -15,6 +16,7 @@ namespace TestContainers.Core.Containers
 {
     public class ContainerBuilder<T> where T : GenericContainer
     {
+        private ImmutableList<Action<ContainerOptions>> _actions = ImmutableList<Action<ContainerOptions>>.Empty;
         private ContainerOptions _options = new ContainerOptions();
         private readonly DockerImageName _dockerImage;
 
@@ -32,10 +34,15 @@ namespace TestContainers.Core.Containers
         {
 
         }
+
+        public ContainerBuilder(ImmutableList<Action<ContainerOptions>> immutableLists)
+        {
+            _actions = immutableLists;
+        }
+
         private ContainerBuilder<T> SetOptionAndReturnSelf(Action<ContainerOptions> optionAction)
         {
-            optionAction(_options);
-            return this;
+            return new ContainerBuilder<T>(_actions.Add(optionAction));
         }
 
         public ContainerBuilder<T> DependsOn(params IStartable[] startables)
@@ -99,7 +106,12 @@ namespace TestContainers.Core.Containers
         public ContainerBuilder<T> WithLogConsumer(IProgress<string> consumer) => this;
         public T Build()
         {
-            return Activator.CreateInstance(typeof(T), _dockerImage, _options) as T;
+            var options = new ContainerOptions();
+            foreach (var action in _actions)
+            {
+                action(options);
+            }
+            return Activator.CreateInstance(typeof(T), _dockerImage, options) as T;
         }
     }
 

@@ -50,5 +50,16 @@ namespace TestContainers.Images.Builder
         {
             return Task.FromResult<DockerImageName>(null);
         }
+
+        internal ImageFromDockerfile WithFileFromString(string v1, string v2)
+        {
+            throw new NotImplementedException();
+        }
+
+        //TODO: See original
+        internal ImageFromDockerfile WithDockerfileFromBuilder(Action<DockerfileBuilder> builderAction)
+        {
+            return this;
+        }
     }
 }

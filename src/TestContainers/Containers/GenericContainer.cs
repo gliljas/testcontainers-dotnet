@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using Polly;
 using TestContainers.Containers;
 using TestContainers.Containers.Mounts;
+using TestContainers.Containers.Output;
 using TestContainers.Containers.StartupStrategies;
 using TestContainers.Containers.Wait.Strategy;
 using TestContainers.Containers.WaitStrategies;
@@ -105,7 +106,8 @@ namespace TestContainers.Core.Containers
                 return;
             }
 
-            await Startables.DeepStart(_containerOptions.DependsOn);
+            if (_containerOptions.DependsOn != null)
+                await Startables.DeepStart(_containerOptions.DependsOn);
 
             await DoStart(cancellationToken);
         }
@@ -397,7 +399,7 @@ namespace TestContainers.Core.Containers
                 createCommand.NetworkingConfig.EndpointsConfig = createCommand.NetworkingConfig.EndpointsConfig ?? new Dictionary<string, EndpointSettings>();
                 createCommand.NetworkingConfig.EndpointsConfig[await _containerOptions.Network.GetId()] = new EndpointSettings { Aliases = _containerOptions.NetworkAliases };
             }
-      
+
             _containerOptions.CreateContainerParametersModifiers.ForEach(x => x(createCommand));
         }
 
@@ -491,6 +493,11 @@ namespace TestContainers.Core.Containers
         }
 
         public Task FollowOutput(IProgress<string> consumer, params OutputType[] types)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task FollowOutput(IConsumer<OutputFrame> consumer, params OutputType[] types)
         {
             throw new NotImplementedException();
         }
