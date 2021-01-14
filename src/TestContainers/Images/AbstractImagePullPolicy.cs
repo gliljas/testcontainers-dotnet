@@ -53,6 +53,7 @@ namespace TestContainers.Images
      *
      * @return {@code true} to update the locally available image, {@code false} to use local instead
      */
-        abstract protected bool ShouldPullCached(DockerImageName imageName, ImageData localImageData);
+
+        protected internal virtual bool ShouldPullCached(DockerImageName imageName, ImageData localImageData) => false;
     }
 }

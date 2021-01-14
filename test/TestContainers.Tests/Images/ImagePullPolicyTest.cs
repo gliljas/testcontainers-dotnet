@@ -111,7 +111,7 @@ namespace TestContainers.Tests.Images
                 return Task.FromResult(Environment.GetEnvironmentVariable("ALWAYS_PULL_IMAGE") != null);
             }
 
-            protected override bool ShouldPullCached(DockerImageName imageName, ImageData localImageData)
+            protected internal override bool ShouldPullCached(DockerImageName imageName, ImageData localImageData)
             {
                 throw new NotImplementedException();
             }

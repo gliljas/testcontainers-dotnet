@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace TestContainers.Images
 {
     public class AgeBasedPullPolicy : AbstractImagePullPolicy
     {
         private TimeSpan _maxAge;
+        private ILogger _logger = StaticLoggerFactory.CreateLogger<AgeBasedPullPolicy>();
 
         public AgeBasedPullPolicy(TimeSpan maxAge)
         {
@@ -19,9 +21,15 @@ namespace TestContainers.Images
             throw new NotImplementedException();
         }
 
-        protected override bool ShouldPullCached(DockerImageName imageName, ImageData localImageData)
+        protected internal override bool ShouldPullCached(DockerImageName imageName, ImageData localImageData)
         {
-            throw new NotImplementedException();
+            var imageAge = DateTimeOffset.Now-localImageData.CreatedAt;
+            var result = imageAge > _maxAge;
+            if (result)
+            {
+                _logger.LogTrace("Should pull image: {imageName}", imageName);
+            }
+            return result;
         }
     }
 }

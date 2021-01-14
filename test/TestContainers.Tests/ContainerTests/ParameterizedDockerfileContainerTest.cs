@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using TestContainers.Core.Containers;
@@ -26,7 +23,7 @@ namespace TestContainers.Tests.ContainerTests
                         // Could potentially customise the image here, e.g. adding files, running
                         //  commands, etc.
                         .Build();
-            })).WithCommand("top").Build())
+            }).GetImageName()).WithCommand("top").Build())
             {
                 var release = (await container.ExecInContainer("cat", "/etc/alpine-release")).Stdout;
 

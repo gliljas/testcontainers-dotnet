@@ -486,7 +486,7 @@ namespace TestContainers.Containers
         {
             await base.Start(cancellationToken);
 
-            await FollowOutput(new LoggerConsumer(Logger));
+            //await FollowOutput(new LoggerConsumer(Logger));
 
             // wait for the compose container to stop, which should only happen after it has spawned all the service containers
             Logger.LogInformation("Docker Compose container is running for command: {command}", string.Join(" ", CommandParts));

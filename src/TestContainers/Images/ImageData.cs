@@ -5,7 +5,8 @@ namespace TestContainers.Images
 {
     public class ImageData
     {
-        public DateTimeOffset CreatedAt { get; private set; }
+        public static ImageDataBuilder Builder => new ImageDataBuilder();
+        public DateTimeOffset CreatedAt { get; internal set; }
 
         internal static ImageData From(ImageInspectResponse response)
         {

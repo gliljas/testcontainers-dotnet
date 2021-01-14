@@ -8,7 +8,7 @@ using TestContainers.Utility;
 
 namespace TestContainers.Images.Builder
 {
-    public class ImageFromDockerfile
+    public class ImageFromDockerfile//  : ITaskSource<DockerImageName>
     {
         private readonly string _dockerImageName;
         private readonly bool _deleteOnExit;
@@ -20,7 +20,7 @@ namespace TestContainers.Images.Builder
 
         internal ImageFromDockerfile WithFileFromClasspath(string v1, string v2)
         {
-            throw new NotImplementedException();
+            return this;
         }
 
         public ImageFromDockerfile(string dockerImageName) : this(dockerImageName, true)
